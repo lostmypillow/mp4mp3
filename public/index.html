@@ -38,7 +38,11 @@
         try {
             statusDiv.innerText = 'Uploading raw file buffer...';
             console.log("file.name", file.name)
-            const safeFilename = encodeURIComponent(file.name);
+            const cleanedFilename = file.name
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Strips Zero-Width Spaces
+                .replace(/[^\x20-\x7E\u4E00-\u9FFF]/g, ''); // Keeps normal English, numbers, symbols, and Chinese characters
+            
+            const safeFilename = encodeURIComponent(cleanedFilename);
             // 1. Define the upload promise but DO NOT await it yet
             const uploadPromise = fetch(`/convert?id=${sessionId}&name=${safeFilename}`, {
                 method: 'PUT',
