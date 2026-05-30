@@ -4,7 +4,10 @@ const router = express.Router();
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('node:crypto');
 
+// Generates an 8-character hexadecimal random string (e.g., "7f3b2a1d")
+const shortString = crypto.randomBytes(4).toString('hex')
 const ffmpeg = path.join(process.cwd(), 'ffmpeg-binary', 'ffmpeg');
 
 router.put('/', (req, res) => {
@@ -33,7 +36,7 @@ router.put('/', (req, res) => {
         }
 
         const baseNameWithoutExt = path.parse(originalFilename).name;
-        const inputPath = path.join(__dirname, originalFilename);
+        const inputPath = path.join(__dirname, shortString);
         const outputPath = path.join(__dirname, `${baseNameWithoutExt}.mp3`);
         const writeStream = fs.createWriteStream(inputPath);
 

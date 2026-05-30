@@ -73,6 +73,7 @@ function onError(error) {
       process.exit(1);
       break;
     default:
+      console.log(JSON.stringify(error))
       throw error;
   }
 }
