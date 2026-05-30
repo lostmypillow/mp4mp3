@@ -24,7 +24,7 @@ router.put('/', (req, res) => {
             return res.status(400).send('Active SSE connection required before uploading');
         }
 
-        let originalFilename = req.headers['x-file-name'];
+        let originalFilename = decodeURIComponent(req.query.name);
         if (!originalFilename) {
             return res.status(400).send('Missing x-file-name header');
         }
