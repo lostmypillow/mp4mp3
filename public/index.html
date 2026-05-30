@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MP4 => MP3 轉檔 0.1.0</title>
+</head>
+<body>
+<main class="container-fluid">
+<h1>MP4 => MP3 轉檔</h1>
+<span>選擇 MP4 檔完按 『開始轉檔』</span>
+<br/>
+    <article><input type="file" id="fileInput" accept="video/mp4"></article>
+
+<br/>
+<link rel="stylesheet" href="stylesheets/pico.blue.css">
+<button id="convertBtn">開始轉檔</button>
+<div id="status" style="margin-top: 15px;"></div>
+<progress id="progress" max="100" value="0">0%</progress>
+</main>
+<script>
+    document.getElementById('fileInput').value = '';
+    document.getElementById('convertBtn').addEventListener('click', async () => {
+
+        const fileInput = document.getElementById('fileInput');
+        const statusDiv = document.getElementById('status');
+        const progressDiv = document.getElementById('progress');
+        progressDiv.setAttribute('value', '0')
+        if (!fileInput.files.length) {
+            statusDiv.innerText = 'Please select an MP4 file first.';
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const sessionId = Math.random().toString(36).substring(2, 15);
+
+        statusDiv.innerText = 'Initializing real-time progress channel...';
+
+        const eventSource = new EventSource(`/progress?id=${sessionId}`);
+
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.status === 'converting') {
+                statusDiv.innerText = 'Upload complete. Processing audio extraction...';
+
+            } else if (data.status === 'progress') {
+
+                progressDiv.setAttribute('value', `${data.progress}`)
+                statusDiv.innerText = `Converting... ${data.progress}%`;
+
+            } else if (data.status === 'done') {
+                statusDiv.innerText = 'Success! Triggering your download file download...';
+                eventSource.close();
+
+                const downloadLink = document.createElement('a');
+                downloadLink.href = data.downloadUrl;
+                downloadLink.download = data.filename;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            } else if (data.status === 'error') {
+                statusDiv.innerText = `Error: ${data.message}`;
+                eventSource.close();
+            }
+        };
+
+        try {
+            statusDiv.innerText = 'Uploading raw file buffer...';
+            console.log("file.name", file.name)
+            const safeFilename = encodeURIComponent(file.name);
+
+            // Use a PUT request with a binary body to completely bypass form data or multipart parsing libraries
+            const response = await fetch(`/convert?id=${sessionId}`, {
+                method: 'PUT',
+                body: file,
+                headers: {'Content-Type': 'video/mp4', 'X-File-Name': safeFilename}
+            });
+
+            if (!response.ok) {
+                statusDiv.innerText = 'Server rejected the file transfer or media extraction failed.';
+                eventSource.close();
+            }
+        } catch (err) {
+            statusDiv.innerText = `Network connection failure: ${err.message}`;
+            eventSource.close();
+        }
+    });
+</script>
+</body>
+</html>
