@@ -39,12 +39,11 @@
             statusDiv.innerText = 'Uploading raw file buffer...';
             console.log("file.name", file.name)
             const safeFilename = encodeURIComponent(file.name);
-        const safeFilename = encodeURIComponent(file.name);
             // 1. Define the upload promise but DO NOT await it yet
             const uploadPromise = fetch(`/convert?id=${sessionId}&name=${safeFilename}`, {
                 method: 'PUT',
                 body: file,
-                headers: {'Content-Type': 'video/mp4', 'X-File-Name': safeFilename}
+                headers: {'Content-Type': 'video/mp4'}
             });
         
             // 2. Open the real-time progress channel right after the upload kicks off
