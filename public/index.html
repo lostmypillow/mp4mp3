@@ -35,34 +35,6 @@
 
         statusDiv.innerText = 'Initializing real-time progress channel...';
 
-
-        eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-
-            if (data.status === 'converting') {
-                statusDiv.innerText = 'Upload complete. Processing audio extraction...';
-
-            } else if (data.status === 'progress') {
-
-                progressDiv.setAttribute('value', `${data.progress}`)
-                statusDiv.innerText = `Converting... ${data.progress}%`;
-
-            } else if (data.status === 'done') {
-                statusDiv.innerText = 'Success! Triggering your download file download...';
-                eventSource.close();
-
-                const downloadLink = document.createElement('a');
-                downloadLink.href = data.downloadUrl;
-                downloadLink.download = data.filename;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-            } else if (data.status === 'error') {
-                statusDiv.innerText = `Error: ${data.message}`;
-                eventSource.close();
-            }
-        };
-
         try {
             statusDiv.innerText = 'Uploading raw file buffer...';
             console.log("file.name", file.name)
