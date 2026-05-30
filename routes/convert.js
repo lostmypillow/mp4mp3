@@ -117,7 +117,7 @@ router.put('/', (req, res) => {
                         sseRes.write(`data: ${JSON.stringify({
                             status: 'done',
                             filename: `${baseNameWithoutExt}.mp3`,
-                            downloadUrl: `/download?id=${sessionId}&filename=${shortString}`
+                            downloadUrl: `/download?id=${sessionId}&filename=${shortString}&originalFilename=${baseNameWithoutExt}.mp3`
                         })}\n\n`);
                     } else {
                         console.error(`\n--- FFmpeg Conversion Failed with Exit Code ${code} ---`);
