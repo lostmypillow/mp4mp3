@@ -1,0 +1,7 @@
+.idea
+ffmpeg-binary/manpages
+ffmpeg-binary/model
+ffmpeg-binary/GPLv3.txt
+ffmpeg-binary/qt-faststart
+ffmpeg-binary/readme.txt
+node_modules
