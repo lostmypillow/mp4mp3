@@ -116,7 +116,7 @@ router.put('/', (req, res) => {
                     if (code === 0) {
                         sseRes.write(`data: ${JSON.stringify({
                             status: 'done',
-                            filename: baseNameWithoutExt,
+                            filename: `${baseNameWithoutExt}.mp3`,
                             downloadUrl: `/download?id=${sessionId}&filename=${shortString}`
                         })}\n\n`);
                     } else {
