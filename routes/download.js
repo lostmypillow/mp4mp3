@@ -8,7 +8,7 @@ router.get('/', (req, res) => {
     const outputPath = path.join(__dirname, `${req.query.filename}.mp3`);
 
     if (fs.existsSync(outputPath)) {
-        res.download(outputPath, `${req.query.filename}.mp3`, () => {
+        res.download(outputPath, `${req.query.originalFilename}.mp3`, () => {
             fs.unlink(outputPath, () => {});
         });
     } else {
