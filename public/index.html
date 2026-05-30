@@ -41,13 +41,13 @@
             const cleanedFilename = file.name
                 .replace(/[\u200B-\u200D\uFEFF]/g, '') // Strips Zero-Width Spaces
                 .replace(/[^\x20-\x7E\u4E00-\u9FFF]/g, ''); // Keeps normal English, numbers, symbols, and Chinese characters
-            
-            const safeFilename = encodeURIComponent(cleanedFilename);
-            // 1. Define the upload promise but DO NOT await it yet
-            const uploadPromise = fetch(`/convert?id=${sessionId}&name=${safeFilename}`, {
+            const utf8Bytes = new TextEncoder().encode(file.name);
+            const base64Filename = btoa(String.fromCharCode(...utf8Bytes));
+
+            const uploadPromise = fetch(`/convert?id=${sessionId}`, {
                 method: 'PUT',
                 body: file,
-                headers: {'Content-Type': 'video/mp4'}
+                headers: {'Content-Type': 'video/mp4','X-File-Name': base64Filename}
             });
         
             // 2. Open the real-time progress channel right after the upload kicks off
