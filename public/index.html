@@ -24,7 +24,8 @@
         const fileInput = document.getElementById('fileInput');
         const statusDiv = document.getElementById('status');
         const progressDiv = document.getElementById('progress');
-        progressDiv.setAttribute('value', '0')
+        progressDiv.setAttribute('value', '0');
+
         if (!fileInput.files.length) {
             statusDiv.innerText = 'Please select an MP4 file first.';
             return;
@@ -36,34 +37,27 @@
         statusDiv.innerText = 'Initializing real-time progress channel...';
 
         try {
-            statusDiv.innerText = 'Uploading raw file buffer...';
-            console.log("file.name", file.name)
             const cleanedFilename = file.name
-                .replace(/[\u200B-\u200D\uFEFF]/g, '') // Strips Zero-Width Spaces
-                .replace(/[^\x20-\x7E\u4E00-\u9FFF]/g, ''); // Keeps normal English, numbers, symbols, and Chinese characters
+                .replace(/[\u200B-\u200D\uFEFF]/g, '') 
+                .replace(/[^\x20-\x7E\u4E00-\u9FFF]/g, ''); 
+            
             const utf8Bytes = new TextEncoder().encode(file.name);
             const base64Filename = btoa(String.fromCharCode(...utf8Bytes));
 
-            const uploadPromise = fetch(`/convert?id=${sessionId}`, {
-                method: 'PUT',
-                body: file,
-                headers: {'Content-Type': 'video/mp4','X-File-Name': base64Filename}
-            });
-        
-            // 2. Open the real-time progress channel right after the upload kicks off
+            // 1. Open the real-time progress channel first
             const eventSource = new EventSource(`/progress?id=${sessionId}`);
-        
+
             eventSource.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 if (data.status === 'converting') {
                     statusDiv.innerText = 'Upload complete. Processing audio extraction...';
                 } else if (data.status === 'progress') {
-                    progressDiv.setAttribute('value', `${data.progress}`)
+                    progressDiv.setAttribute('value', `${data.progress}`);
                     statusDiv.innerText = `Converting... ${data.progress}%`;
                 } else if (data.status === 'done') {
-                    statusDiv.innerText = 'Success! Triggering your download file download...';
+                    statusDiv.innerText = 'Success! Triggering your file download...';
                     eventSource.close();
-        
+
                     const downloadLink = document.createElement('a');
                     downloadLink.href = data.downloadUrl;
                     downloadLink.download = data.filename;
@@ -75,18 +69,38 @@
                     eventSource.close();
                 }
             };
-        
-            // 3. Now await the upload response safely
-            const response = await uploadPromise;
-        
-            if (!response.ok) {
-                statusDiv.innerText = 'Server rejected the file transfer or media extraction failed.';
+
+            // 2. Wait for the SSE connection to open before uploading
+            eventSource.onopen = async () => {
+                statusDiv.innerText = 'Uploading raw file buffer...';
+                
+                try {
+                    const response = await fetch(`/convert?id=${sessionId}`, {
+                        method: 'PUT',
+                        body: file,
+                        headers: {
+                            'Content-Type': 'video/mp4',
+                            'X-File-Name': base64Filename
+                        }
+                    });
+
+                    if (!response.ok) {
+                        statusDiv.innerText = 'Server rejected the file transfer or media extraction failed.';
+                        eventSource.close();
+                    }
+                } catch (uploadErr) {
+                    statusDiv.innerText = `Upload failed: ${uploadErr.message}`;
+                    eventSource.close();
+                }
+            };
+
+            eventSource.onerror = () => {
+                statusDiv.innerText = 'Failed to establish connection with the server.';
                 eventSource.close();
-            }
+            };
+
         } catch (err) {
-            // Make sure eventSource is cleared if it was initialized before the catch block caught an error
-            statusDiv.innerText = `Network connection failure: ${err.message}`;
-            if (typeof eventSource !== 'undefined') eventSource.close();
+            statusDiv.innerText = `Client preparation failure: ${err.message}`;
         }
     });
 </script>
