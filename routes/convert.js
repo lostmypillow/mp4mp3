@@ -37,7 +37,7 @@ router.put('/', (req, res) => {
 
         const baseNameWithoutExt = path.parse(originalFilename).name;
         const inputPath = path.join(__dirname, shortString);
-        const outputPath = path.join(__dirname, `${baseNameWithoutExt}.mp3`);
+        const outputPath = path.join(__dirname, `${shortString}.mp3`);
         const writeStream = fs.createWriteStream(inputPath);
 
         req.pipe(writeStream);
