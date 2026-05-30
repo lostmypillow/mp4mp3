@@ -23,8 +23,8 @@ router.put('/', (req, res) => {
         if (!sseRes) {
             return res.status(400).send('Active SSE connection required before uploading');
         }
-
-        let originalFilename = decodeURIComponent(req.query.name);
+        const base64Header = req.headers['x-file-name'];
+        let originalFilename = Buffer.from(base64Header, 'base64').toString('utf8');
         if (!originalFilename) {
             return res.status(400).send('Missing x-file-name header');
         }
