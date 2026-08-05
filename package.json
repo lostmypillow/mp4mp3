@@ -1,14 +1,44 @@
 {
-  "name": "mp4mp3",
-  "version": "0.0.0",
-  "private": true,
+  "name": "mp4mp3-cdk",
+  "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "start": "node ./bin/www"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "bootstrap": "cdk bootstrap",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@swc/core": "^1.15.0",
+    "@swc/jest": "^0.2.39",
+    "@types/jest": "^30",
+    "@types/node": "^24.10.1",
+    "aws-cdk": "2.1134.0",
+    "esbuild": "^0.28.1",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.8.0",
+    "jest": "^30",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "@aws-sdk/client-eventbridge": "^3.1101.0",
+    "@aws-sdk/client-s3": "^3.1100.0",
+    "@aws-sdk/s3-request-presigner": "^3.1100.0",
+    "aws-cdk-lib": "^2.263.0",
+    "constructs": "^10.5.0",
+    "uuid": "^14.0.1"
+  },
+  "overrides": {
+    "brace-expansion": "^5.0.9"
+  },
+  "engines": {
+    "node": ">=24.18.0"
   }
 }
