@@ -1,1 +1,1 @@
-public/stylesheets/*.css linguist-vendored
+public/stylesheets/** linguist-vendored
