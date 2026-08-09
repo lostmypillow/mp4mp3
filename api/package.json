@@ -7,9 +7,12 @@
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
-    "bootstrap": "cdk bootstrap",
-    "diff": "cdk diff",
-    "deploy": "cdk deploy",
+    "synth:layer": "npx cdk synth Mp4mp3LayerStack",
+    "diff:layer": "npx cdk diff Mp4mp3LayerStack",
+    "deploy:layer": "npx cdk deploy Mp4mp3LayerStack",
+    "synth:lambda": "npx cdk synth Mp4mp3Stack",
+    "diff:lambda": "npx cdk diff Mp4mp3Stack",
+    "deploy:lambda": "npx cdk diff Mp4mp3Stack",
     "destroy": "cdk destroy"
   },
   "devDependencies": {
