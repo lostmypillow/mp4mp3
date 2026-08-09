@@ -18,15 +18,18 @@ export class Mp4mp3Stack extends cdk.Stack {
         const ffmpegLayer = new lambda.LayerVersion(this, 'mp4mp3-ffmpeg-layer', {
                 code: lambda.Code.fromAsset(
                     import.meta.dirname, {
+                        exclude: ['*'],
                         bundling: {
                             image: cdk.DockerImage.fromRegistry('alpine:latest'),
                             user: 'root',
                             command: [
-                                'sh', '-c', 'apk add --no-cache wget tar xz && '
-                                + 'mkdir -p /asset-output/bin && '
-                                + 'wget johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz && '
-                                + 'tar -xvf ffmpeg-release-arm64-static.tar.xz --strip-components=1 -C /tmp && '
-                                + 'mv /tmp/ffmpeg /asset-output/bin/'
+                                'sh', '-c',
+                                'apk add --no-cache wget tar xz && ' +
+                                'mkdir -p /asset-output/bin && ' +
+                                'wget -O /tmp/ffmpeg.tar.xz https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-arm64-static.tar.xz && ' +
+                                'tar -xvf /tmp/ffmpeg.tar.xz --strip-components=1 -C /tmp && ' +
+                                'mv /tmp/ffmpeg /asset-output/bin/ && ' +
+                                'rm -rf /tmp/*'
                             ],
                         },
                     }
@@ -42,10 +45,11 @@ export class Mp4mp3Stack extends cdk.Stack {
             enforceSSL: true,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
             autoDeleteObjects: true,
+            eventBridgeEnabled: true,
             cors: [
                 {
                     allowedMethods: [s3.HttpMethods.PUT],
-                    allowedOrigins: ['mp3mp4.lostmypillow.com'],
+                    allowedOrigins: ['mp3mp4.lostmypillow.com', 'http://localhost:5173'],
                     allowedHeaders: ['*'],
                 },
             ],
@@ -88,9 +92,9 @@ export class Mp4mp3Stack extends cdk.Stack {
         uploadLambda.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
             cors: {
-                allowedOrigins: ['https://mp4mp3.lostmypillow.com'],
+                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
                 allowedMethods: [
-                    lambda.HttpMethod.GET,
+                    lambda.HttpMethod.POST,
                 ],
                 allowedHeaders: ['Content-Type', 'Authorization'],
                 allowCredentials: true,
@@ -138,7 +142,7 @@ export class Mp4mp3Stack extends cdk.Stack {
         downloadLambda.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
             cors: {
-                allowedOrigins: ['https://mp4mp3.lostmypillow.com'],
+                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
                 allowedMethods: [
                     lambda.HttpMethod.GET,
                 ],
