@@ -57,7 +57,7 @@ function App({onUploadComplete}) {
             const {url, key} = await response.json();
             setFileKey(key)
 
-            await new Promise((resolve, reject) => {
+            await new Promise<void>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
 
                 xhr.upload.addEventListener('progress', (event) => {
@@ -192,7 +192,7 @@ function App({onUploadComplete}) {
                 </AppBar>
 
                 <div className="p-8 w-full h-full flex flex-col items-center justify-between">
-                    <p className='text-lg'><span className='font-bold'>Status:</span> {uploading ? 'Uploading' : isProcessing ? 'Processing...' : downloadUrl ? 'Ready to download' : 'Standby'} </p>
+                    <p className='text-lg'><span className='font-bold'>Status:</span> {uploading ? '上傳中...' : isProcessing ? '轉檔中...' : downloadUrl ? '轉檔完成，請按「下載 MP3 檔」按鈕下載!' : '待命'} </p>
 
                     {error && <p className="error text-red-500">{error}</p>}
 
@@ -205,7 +205,7 @@ function App({onUploadComplete}) {
                             startIcon={<CloudUploadIcon/>}
                             className="shrink-0"
                         >
-                            {`Upload an MP4 (<50MB)`}
+                            {`上傳 MP4 (<600MB)`}
                             <VisuallyHiddenInput
                                 type="file"
                                 onChange={handleFileSelect}
@@ -228,7 +228,7 @@ function App({onUploadComplete}) {
                             // We safely disable the button until uploading finishes, processing finishes, and we have a final URL.
                             disabled={uploading || isProcessing || !downloadUrl}
                         >
-                            {isProcessing ? 'Processing...' : `Download the MP3`}
+                            {isProcessing ? '轉檔中...' : `下載 MP3 檔`}
                         </Button>
                     </div>
 
