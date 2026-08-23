@@ -49,7 +49,7 @@ export class Mp4mp3Stack extends cdk.Stack {
             cors: [
                 {
                     allowedMethods: [s3.HttpMethods.PUT],
-                    allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
+                    allowedOrigins: ['mp3mp4.lostmypillow.com', 'http://localhost:5173', 'https://lostmypillow.github.io'],
                     allowedHeaders: ['*'],
                 },
             ],
@@ -92,7 +92,7 @@ export class Mp4mp3Stack extends cdk.Stack {
         uploadLambda.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
             cors: {
-                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
+                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173', 'https://lostmypillow.github.io'],
                 allowedMethods: [
                     lambda.HttpMethod.POST,
                 ],
@@ -143,7 +143,7 @@ export class Mp4mp3Stack extends cdk.Stack {
         downloadLambda.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
             cors: {
-                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
+                allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173', 'https://lostmypillow.github.io'],
                 allowedMethods: [
                     lambda.HttpMethod.GET,
                 ],
