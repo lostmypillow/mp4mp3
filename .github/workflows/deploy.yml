@@ -1,11 +1,7 @@
 name: Deploy to staging site
 
 on:
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
+  push:
     branches:
       - staging
     paths:
