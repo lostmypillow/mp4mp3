@@ -49,7 +49,7 @@ export class Mp4mp3Stack extends cdk.Stack {
             cors: [
                 {
                     allowedMethods: [s3.HttpMethods.PUT],
-                    allowedOrigins: ['mp3mp4.lostmypillow.com', 'http://localhost:5173'],
+                    allowedOrigins: ['https://mp4mp3.lostmypillow.com', 'http://localhost:5173'],
                     allowedHeaders: ['*'],
                 },
             ],
@@ -112,6 +112,7 @@ export class Mp4mp3Stack extends cdk.Stack {
             runtime: lambda.Runtime.NODEJS_24_X,
             architecture: lambda.Architecture.ARM_64,
             memorySize: 1796,
+            ephemeralStorageSize:cdk.Size.mebibytes(1024),
             timeout: cdk.Duration.minutes(1),
             environment: {
                 BUCKET_NAME: bucket.bucketName,
@@ -174,6 +175,43 @@ export class Mp4mp3Stack extends cdk.Stack {
             })
         );
 
+        const cleanerLambda = new lambdaNode.NodejsFunction(this, 'mp4mp3-cleaner', {
+            runtime: lambda.Runtime.NODEJS_24_X,
+            handler: 'handler',
+            entry: path.join(import.meta.dirname, '../src', 'cleaner.js'),
+            timeout: cdk.Duration.seconds(60),
+            memorySize: 128,
+            architecture: lambda.Architecture.ARM_64,
+            environment: {
+                BUCKET_NAME: bucket.bucketName,
+            },
+        });
+
+        cleanerLambda.addToRolePolicy(
+            new iam.PolicyStatement({
+                actions: [
+                    's3:ListBucketMultipartUploads',
+                    's3:AbortMultipartUpload',
+                ],
+                resources: [
+                    bucket.bucketArn,
+                    `${bucket.bucketArn}/*`,
+                ],
+            })
+        );
+
+        const cleanupRule = new events.Rule(this, 'DailyS3CleanupRule', {
+            schedule: events.Schedule.cron({
+                minute: '0',
+                hour: '23',
+                month: '*',
+                weekDay: '*',
+                year: '*',
+            }),
+        });
+
+        cleanupRule.addTarget(new targets.LambdaFunction(cleanerLambda));
+
 
         const convertInvocationMetric = convertLambda.metricInvocations({
             period: cdk.Duration.minutes(5),
@@ -195,6 +233,7 @@ export class Mp4mp3Stack extends cdk.Stack {
         bucket.grantReadWrite(convertLambda);
         bucket.grantDelete(convertLambda);
         bucket.grantRead(downloadLambda);
+        bucket.grantReadWrite(cleanerLambda)
 
     }
 }
