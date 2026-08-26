@@ -1,0 +1,57 @@
+name: Forgejo CI / CD Staging & Production Deploy
+
+on:
+  pull_request:
+    branches: [ main, master ]
+  push:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    name: Run Unit & Integration Tests
+    runs-on: docker
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run CI Checks (Typecheck, Lint & Vitest)
+        run: npm run ci
+
+  deploy-staging:
+    name: Deploy Staging Stack (Pull Request)
+    needs: test
+    if: github.event_name == 'pull_request'
+    runs-on: docker
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build & Deploy Self-Hosted Staging Containers
+        run: |
+          echo "Deploying updated Docker containers to Staging environment (Ports: 3001, 9002, 9003)..."
+          docker compose -f compose.staging.yaml down
+          docker compose -f compose.staging.yaml up -d --build
+
+  deploy-production:
+    name: Deploy Production Stack (Push to Main)
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: docker
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build & Deploy Self-Hosted Production Containers
+        run: |
+          echo "Deploying updated Docker containers to Production environment (Ports: 3000, 9000, 9001)..."
+          docker compose -f compose.prod.yaml down
+          docker compose -f compose.prod.yaml up -d --build

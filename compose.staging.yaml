@@ -1,0 +1,74 @@
+services:
+  mp4mp3-staging:
+    container_name: mp4mp3-staging
+    image: mp4mp3-staging
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - backend/.env.staging
+    environment:
+      AWS_PROFILE: ""
+      AWS_EC2_METADATA_DISABLED: "true"
+    ports:
+      - "3001:3000"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+
+  minio-staging:
+    image: minio/minio:latest
+    container_name: minio-server-staging
+    restart: unless-stopped
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - minio_data_staging:/data
+    environment:
+      MINIO_ROOT_USER: "admin"
+      MINIO_ROOT_PASSWORD: "password123"
+      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+      MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-staging:3000/convert/events"
+    command: server /data --console-address ":9001"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+
+  minio-init-staging:
+    image: minio/mc
+    depends_on:
+      - minio-staging
+      - mp4mp3-staging
+    entrypoint: |
+      /bin/sh -c "
+      echo 'Waiting for MinIO Staging...';
+      until mc alias set localminio http://minio-staging:9000 admin password123; do
+        sleep 2;
+      done;
+      sleep 3;
+      
+      # 1. Create target bucket
+      mc mb --ignore-existing localminio/my-bucket;
+      
+      # 2. Set bucket permissions
+      mc anonymous set upload localminio/my-bucket;
+      
+      # 3. Attach 'Object Created' webhook event listener (Matches EventBridge rule)
+      mc event add localminio/my-bucket arn:minio:sqs::primary:webhook --event put;
+      
+      # 4. Add 7-day object lifecycle expiration rule
+      mc ilm rule add --expire-days 1 localminio/my-bucket;
+      
+      echo 'MinIO Staging initialization complete!';
+      exit 0;
+      "
+
+volumes:
+  minio_data_staging:
