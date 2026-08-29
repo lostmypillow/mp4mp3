@@ -72,6 +72,8 @@ services:
       echo 'MinIO dev initialization complete!';
       exit 0;
       "
-
+networks:
+  proxy-net:
+    external: true
 volumes:
   minio_data_dev:
