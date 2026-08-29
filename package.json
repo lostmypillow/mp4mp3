@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3",
-    "version": "2.0.1-SNAPSHOT",
+    "version": "2.0.2",
     "description": "Full stack application for converting MP4 files to MP3 for my dad.",
     "license": "MIT",
     "author": "lostmypillow",
