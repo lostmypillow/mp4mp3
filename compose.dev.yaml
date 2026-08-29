@@ -14,7 +14,7 @@ services:
     ports:
       - "8001:3000"
     networks:
-      - proxy_net
+      - proxy-net
     deploy:
       resources:
         limits:
@@ -36,7 +36,7 @@ services:
       MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-dev:3000/convert/events"
     command: server /data
     networks:
-      - proxy_net
+      - proxy-net
     deploy:
       resources:
         limits:
