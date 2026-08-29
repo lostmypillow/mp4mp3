@@ -33,9 +33,7 @@ jobs:
     runs-on: host
     steps:
       - name: Checkout Code
-        run: |
-          git fetch origin ${{ github.event.pull_request.head.ref }}
-          git checkout FETCH_HEAD
+        uses: actions/checkout@v4
 
       - name: Build & Deploy Self-Hosted Dev Containers
         run: |
