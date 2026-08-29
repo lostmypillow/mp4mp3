@@ -9,7 +9,7 @@ on:
 jobs:
   test:
     name: Run Unit & Integration Tests
-    runs-on: docker
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
     name: Deploy Staging Stack (Pull Request)
     needs: test
     if: github.event_name == 'pull_request'
-    runs-on: docker
+    runs-on: host
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
