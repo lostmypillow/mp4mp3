@@ -123,7 +123,7 @@ function App({ onUploadComplete }) {
             const uuid = fileKey.split('/').at(0)
             if (import.meta.env.DEV) {
                 // Open SSE connection to local Express backend
-                const sseUrl = `http://localhost:3000/convert/stream?uuid=${uuid}`
+                const sseUrl = `${import.meta.env.VITE_STREAM_ENDPOINT}${uuid}`
                 const eventSource = new EventSource(sseUrl)
                 eventSource.onmessage = (event) => {
                     if (!isActive) return
