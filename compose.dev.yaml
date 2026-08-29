@@ -31,7 +31,7 @@ services:
     environment:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password123"
-      MINIO_SERVER_URL: "https://s3-mp4mp3.local.lostmypillow.com"
+      MINIO_SERVER_URL: "https://s3-mp4mp3.dev.lostmypillow.com"
       MINIO_API_CORS_ALLOW_ORIGIN: "https://mp4mp3.dev.lostmypillow.com"
       MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
       MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-dev:3000/convert/events"
