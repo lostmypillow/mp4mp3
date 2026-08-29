@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3",
-    "version": "2.0.0-SNAPSHOT",
+    "version": "2.0.1-SNAPSHOT",
     "description": "Full stack application for converting MP4 files to MP3 for my dad.",
     "license": "MIT",
     "author": "lostmypillow",
@@ -12,8 +12,6 @@
         "type": "git",
         "url": "git+https://github.com/lostmypillow/mp4mp3.git"
     },
-    "license": "ISC",
-    "author": "",
     "type": "commonjs",
     "main": "index.js",
     "scripts": {
