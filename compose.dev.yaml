@@ -13,6 +13,8 @@ services:
       AWS_EC2_METADATA_DISABLED: "true"
     ports:
       - "8001:3000"
+    networks:
+      - proxy_net
     deploy:
       resources:
         limits:
