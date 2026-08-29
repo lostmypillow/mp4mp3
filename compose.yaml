@@ -27,6 +27,7 @@ services:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password123"
       MINIO_API_CORS_ALLOW_ORIGIN: "*"
+      MINIO_SERVER_URL: "https://s3-mp4mp3.local.lostmypillow.com"
       MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
       MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3:3000/convert/events"
     command: server /data --console-address ":9001"
