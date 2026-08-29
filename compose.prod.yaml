@@ -21,7 +21,7 @@ services:
           cpus: '1.5'
           memory: 1G
 
-  minio-dev:
+  minio-prod:
     image: minio/minio:latest
     container_name: minio-server-prod
     restart: unless-stopped
