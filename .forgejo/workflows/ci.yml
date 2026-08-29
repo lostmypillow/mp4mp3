@@ -39,7 +39,7 @@ jobs:
         run: |
           echo "Deploying updated Docker containers to Dev environment..."
           docker compose -f compose.dev.yaml down
-          docker compose -f compose.dev up -d --build
+          docker compose -f compose.dev.yaml up -d --build
 
   deploy-production:
     name: Deploy Production Stack (Push to Main)
