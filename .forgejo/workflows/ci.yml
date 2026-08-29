@@ -52,6 +52,7 @@ jobs:
 
       - name: Build & Deploy Self-Hosted Production Containers
         run: |
-          echo "Deploying updated Docker containers to Production environment (Ports: 3000, 9000, 9001)..."
+          echo "Deploying updated Docker containers to Production environment..."
+          docker compose -f compose.dev.yaml down
           docker compose -f compose.prod.yaml down
           docker compose -f compose.prod.yaml up -d --build

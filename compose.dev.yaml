@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        FRONTEND_BUILD_MODE: local-dev
     restart: unless-stopped
     env_file:
       - backend/.env.dev

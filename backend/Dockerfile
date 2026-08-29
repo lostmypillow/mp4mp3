@@ -3,7 +3,7 @@
 # ==========================================
 FROM node:24-trixie AS builder
 WORKDIR /app
-
+ARG FRONTEND_BUILD_MODE=local-dev
 # 1. Copy root and workspace package manifests
 COPY package*.json ./
 COPY backend/package*.json ./backend/
@@ -21,9 +21,8 @@ COPY aws/ ./aws/
 
 # 4. Build backend
 RUN npm run build --workspace=backend
-ENV NODE_ENV=development
-# 5. Build frontend
-RUN npm run build --workspace=frontend -- --mode development
+
+RUN npm run build --workspace=frontend -- --mode ${FRONTEND_BUILD_MODE}
 # ==========================================
 # STAGE 2: Distroless Production Runtime
 # ==========================================
