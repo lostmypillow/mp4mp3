@@ -1,57 +1,62 @@
 services:
-  mp4mp3:
-    image: mp4mp3
+  mp4mp3-prod:
+    container_name: mp4mp3-prod
+    image: mp4mp3-prod
     build:
       context: .
       dockerfile: backend/Dockerfile
+      args:
+        FRONTEND_BUILD_MODE: local-prod
     restart: unless-stopped
     env_file:
       - backend/.env.prod
     environment:
       AWS_PROFILE: ""
       AWS_EC2_METADATA_DISABLED: "true"
-    ports:
-      - "3000:3000"
+    networks:
+      - proxy-net
     deploy:
       resources:
         limits:
-          cpus: '2.0'
+          cpus: '1.5'
           memory: 1G
 
-  minio:
+  minio-dev:
     image: minio/minio:latest
-    container_name: minio-server
+    container_name: minio-server-prod
     restart: unless-stopped
-    ports:
-      - "9000:9000"
-      - "9001:9001"
     volumes:
-      - minio_data:/data
+      - minio_data_prod:/data
+    #    No ports exposed because I use AdGuard Home + Nginx to point a domain to an internal Docker address
     environment:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password123"
-      MINIO_API_CORS_ALLOW_ORIGIN: "*"
+      MINIO_SERVER_URL: "https://s3-mp4mp3-prod.lostmypillow.com"
+      MINIO_API_CORS_ALLOW_ORIGIN: "https://mp4mp3-prod.lostmypillow.com"
       MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
-      MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3:3000/convert/events"
-    command: server /data --console-address ":9001"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-prod:3000/convert/events"
+    command: server /data
+    networks:
+      - proxy-net
     deploy:
       resources:
         limits:
-          cpus: '2.0'
-          memory: 2G
+          cpus: '1.5'
+          memory: 1G
 
-  minio-init:
+
+  minio-init-prod:
     image: minio/mc
     depends_on:
-      - minio
-      - mp4mp3
+      - minio-prod
+      - mp4mp3-prod
     entrypoint: |
       /bin/sh -c "
-      echo 'Waiting for MinIO...';
-      until mc alias set localminio http://minio:9000 admin password123; do
+      echo 'Waiting for MinIO dev...';
+      until mc alias set localminio http://minio-prod:9000 admin password123; do
         sleep 2;
       done;
-      sleep 3;
+      sleep 2;
       
       # 1. Create target bucket
       mc mb --ignore-existing localminio/my-bucket;
@@ -59,15 +64,35 @@ services:
       # 2. Set bucket permissions
       mc anonymous set upload localminio/my-bucket;
       
-      # 3. Attach 'Object Created' webhook event listener (Matches EventBridge rule)
+      # 3. Set Bucket CORS Policy
+      cat << 'EOF' > /tmp/cors.json
+      {
+        \"CORSRules\": [
+          {
+            \"AllowedOrigins\": [\"*\"],
+            \"AllowedMethods\": [\"GET\", \"PUT\", \"POST\", \"DELETE\", \"HEAD\"],
+            \"AllowedHeaders\": [\"*\"],
+            \"ExposeHeaders\": [\"ETag\"],
+            \"MaxAgeSeconds\": 3600
+          }
+        ]
+      }
+      EOF
+      mc cors set localminio/my-bucket /tmp/cors.json;
+      
+      # 4. Attach webhook event listener
       mc event add localminio/my-bucket arn:minio:sqs::primary:webhook --event put;
       
-      # 4. Add 7-day object lifecycle expiration rule
+      # 5. Add object lifecycle rule
       mc ilm rule add --expire-days 1 localminio/my-bucket;
       
-      echo 'MinIO initialization complete!';
+      echo 'MinIO dev initialization complete!';
       exit 0;
       "
-
+    networks:
+      - proxy-net
+networks:
+  proxy-net:
+    external: true
 volumes:
-  minio_data:
+  minio_data_prod:
