@@ -27,7 +27,7 @@ jobs:
   deploy-production:
     name: Deploy Production Stack
     needs: test
-    runs-on: docker
+    runs-on: host
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
