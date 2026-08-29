@@ -31,8 +31,8 @@ services:
     environment:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password123"
-      MINIO_SERVER_URL: "https://s3-mp4mp3.dev.lostmypillow.com"
-      MINIO_API_CORS_ALLOW_ORIGIN: "https://mp4mp3.dev.lostmypillow.com"
+      MINIO_SERVER_URL: "https://s3-mp4mp3-dev.lostmypillow.com"
+      MINIO_API_CORS_ALLOW_ORIGIN: "https://mp4mp3-dev.lostmypillow.com"
       MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
       MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-dev:3000/convert/events"
     command: server /data
@@ -56,7 +56,7 @@ services:
       until mc alias set localminio http://minio-dev:9000 admin password123; do
         sleep 2;
       done;
-      sleep 3;
+      sleep 2;
       
       # 1. Create target bucket
       mc mb --ignore-existing localminio/my-bucket;
@@ -64,10 +64,26 @@ services:
       # 2. Set bucket permissions
       mc anonymous set upload localminio/my-bucket;
       
-      # 3. Attach 'Object Created' webhook event listener (Matches EventBridge rule)
+      # 3. Set Bucket CORS Policy
+      cat << 'EOF' > /tmp/cors.json
+      {
+        \"CORSRules\": [
+          {
+            \"AllowedOrigins\": [\"*\"],
+            \"AllowedMethods\": [\"GET\", \"PUT\", \"POST\", \"DELETE\", \"HEAD\"],
+            \"AllowedHeaders\": [\"*\"],
+            \"ExposeHeaders\": [\"ETag\"],
+            \"MaxAgeSeconds\": 3600
+          }
+        ]
+      }
+      EOF
+      mc cors set localminio/my-bucket /tmp/cors.json;
+      
+      # 4. Attach webhook event listener
       mc event add localminio/my-bucket arn:minio:sqs::primary:webhook --event put;
       
-      # 4. Add 7-day object lifecycle expiration rule
+      # 5. Add object lifecycle rule
       mc ilm rule add --expire-days 1 localminio/my-bucket;
       
       echo 'MinIO dev initialization complete!';
