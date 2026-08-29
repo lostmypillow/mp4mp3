@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3-backend",
-    "version": "2.0.2",
+    "version": "2.0.3",
     "private": "true",
     "description": "Express backend for converting MP4 to MP3",
     "license": "MIT",
