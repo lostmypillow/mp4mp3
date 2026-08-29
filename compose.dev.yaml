@@ -1,55 +1,56 @@
 services:
-  mp4mp3-staging:
-    container_name: mp4mp3-staging
-    image: mp4mp3-staging
+  mp4mp3-dev:
+    container_name: mp4mp3-dev
+    image: mp4mp3-dev
     build:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     env_file:
-      - backend/.env.staging
+      - backend/.env.dev
     environment:
       AWS_PROFILE: ""
       AWS_EC2_METADATA_DISABLED: "true"
     ports:
-      - "3001:3000"
+      - "8001:3000"
     deploy:
       resources:
         limits:
           cpus: '1.5'
           memory: 1G
 
-  minio-staging:
+  minio-dev:
     image: minio/minio:latest
-    container_name: minio-server-staging
+    container_name: minio-server-dev
     restart: unless-stopped
-    ports:
-      - "9002:9000"
-      - "9003:9001"
     volumes:
-      - minio_data_staging:/data
+      - minio_data_dev:/data
+#    No ports exposed because I use AdGuard Home + Nginx to point a domain to an internal Docker address
     environment:
       MINIO_ROOT_USER: "admin"
       MINIO_ROOT_PASSWORD: "password123"
       MINIO_API_CORS_ALLOW_ORIGIN: "*"
       MINIO_NOTIFY_WEBHOOK_ENABLE_primary: "on"
-      MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-staging:3000/convert/events"
-    command: server /data --console-address ":9001"
+      MINIO_NOTIFY_WEBHOOK_ENDPOINT_primary: "http://mp4mp3-dev:3000/convert/events"
+    command: server /data
+    networks:
+      - proxy_net
     deploy:
       resources:
         limits:
           cpus: '1.5'
           memory: 1G
 
-  minio-init-staging:
+
+  minio-init-dev:
     image: minio/mc
     depends_on:
-      - minio-staging
-      - mp4mp3-staging
+      - minio-dev
+      - mp4mp3-dev
     entrypoint: |
       /bin/sh -c "
-      echo 'Waiting for MinIO Staging...';
-      until mc alias set localminio http://minio-staging:9000 admin password123; do
+      echo 'Waiting for MinIO dev...';
+      until mc alias set localminio http://minio-dev:9000 admin password123; do
         sleep 2;
       done;
       sleep 3;
@@ -66,9 +67,9 @@ services:
       # 4. Add 7-day object lifecycle expiration rule
       mc ilm rule add --expire-days 1 localminio/my-bucket;
       
-      echo 'MinIO Staging initialization complete!';
+      echo 'MinIO dev initialization complete!';
       exit 0;
       "
 
 volumes:
-  minio_data_staging:
+  minio_data_dev:

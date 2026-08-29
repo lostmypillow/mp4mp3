@@ -35,11 +35,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build & Deploy Self-Hosted Staging Containers
+      - name: Build & Deploy Self-Hosted Dev Containers
         run: |
-          echo "Deploying updated Docker containers to Staging environment (Ports: 3001, 9002, 9003)..."
-          docker compose -f compose.staging.yaml down
-          docker compose -f compose.staging.yaml up -d --build
+          echo "Deploying updated Docker containers to Dev environment..."
+          docker compose -f compose.dev.yaml down
+          docker compose -f compose.dev up -d --build
 
   deploy-production:
     name: Deploy Production Stack (Push to Main)
