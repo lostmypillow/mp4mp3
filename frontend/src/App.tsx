@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, Component } from 'react'
 import Button from '@mui/material/Button'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import LinearProgress from '@mui/material/LinearProgress'
@@ -8,7 +8,17 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import IconButton from '@mui/material/IconButton'
-
+import FooterCredits from './FooterCredits.tsx'
+import HeaderBar from './HeaderBar.tsx'
+import {
+    Divider,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+} from '@mui/material'
+import FolderIcon from '@mui/icons-material/Folder'
+import FileDownloadIcon from '@mui/icons-material/FileDownload'
 const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
     clipPath: 'inset(50%)',
@@ -30,7 +40,7 @@ function App({ onUploadComplete }) {
     const [fileKey, setFileKey] = useState('')
     const [isProcessing, setIsProcessing] = useState(false)
     const [downloadUrl, setDownloadUrl] = useState('') // New state to hold the final URL
-
+    const [downloadList, setDownloadList] = useState([])
     const uploadFile = useCallback(
         async (file) => {
             setUploading(true)
@@ -67,7 +77,7 @@ function App({ onUploadComplete }) {
                     xhr.upload.addEventListener('progress', (event) => {
                         if (event.lengthComputable) {
                             const pct = Math.round(
-                                (event.loaded / event.total) * 100
+                                (event.loaded / event.total) * 50
                             )
                             setProgress(pct)
                         }
@@ -128,6 +138,9 @@ function App({ onUploadComplete }) {
                 eventSource.onmessage = (event) => {
                     if (!isActive) return
                     const data = JSON.parse(event.data)
+                    if (data.progress) {
+                        setProgress(50 + Math.round(data.progress * 50))
+                    }
                     if (data.status === 'complete') {
                         setDownloadUrl(data.url)
                         setIsProcessing(false)
@@ -186,6 +199,11 @@ function App({ onUploadComplete }) {
 
     const handleFileSelect = (event) => {
         const file = event.target.files[0]
+        setDownloadList([
+            {
+                filename: file.name,
+            },
+        ])
         if (file) uploadFile(file)
     }
 
@@ -204,45 +222,9 @@ function App({ onUploadComplete }) {
     return (
         <>
             <div className="flex flex-col items-start w-screen h-screen">
-                <AppBar position="static">
-                    <Toolbar variant="dense">
-                        <Typography
-                            variant="h6"
-                            component="div"
-                            sx={{
-                                color: 'inherit',
-                                flexGrow: 1,
-                            }}
-                        >
-                            MP4 to MP3 Converter
-                        </Typography>
-
-                        <IconButton
-                            href="https://github.com/lostmypillow/mp4mp3"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="GitHub Repository"
-                            color="inherit"
-                        >
-                            <GitHubIcon />
-                        </IconButton>
-                    </Toolbar>
-                </AppBar>
+                <HeaderBar />
 
                 <div className="p-8 w-full h-full flex flex-col items-center justify-between">
-                    <p className="text-lg">
-                        <span className="font-bold">Status:</span>{' '}
-                        {uploading
-                            ? '上傳中...'
-                            : isProcessing
-                              ? '轉檔中...'
-                              : downloadUrl
-                                ? '轉檔完成，請按「下載 MP3 檔」按鈕下載!'
-                                : '待命'}{' '}
-                    </p>
-
-                    {error && <p className="error text-red-500">{error}</p>}
-
                     <div className="flex flex-col md:flex-row gap-2 items-center justify-center w-full">
                         <Button
                             component="label"
@@ -260,31 +242,67 @@ function App({ onUploadComplete }) {
                                 accept="video/mp4"
                             />
                         </Button>
-
-                        <LinearProgress
-                            className="flex-1"
-                            variant="determinate"
-                            value={progress}
-                            aria-label="Upload video"
-                        />
-                        <span className="font-mono shrink-0">{progress}%</span>
-
-                        <Button
-                            variant="contained"
-                            onClick={handleDownload}
-                            // We safely disable the button until uploading finishes, processing finishes, and we have a final URL.
-                            disabled={uploading || isProcessing || !downloadUrl}
-                        >
-                            {isProcessing ? '轉檔中...' : `下載 MP3 檔`}
-                        </Button>
                     </div>
 
-                    <footer className="text-center">
-                        Made with Vite, React, MUI, TailwindCSS, AWS Lambda and
-                        FFmpeg
-                        <br />
-                        Made by LostMyPillow (Johnny)
-                    </footer>
+                    <List className="w-full">
+                        {downloadList.map((file) => (
+                            <>
+                                <ListItem>
+                                    <ListItemIcon>
+                                        <FolderIcon />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        className="flex-1"
+                                        primary={
+                                            <>
+                                                <span className="truncate md:whitespace-normal md:overflow-visible md:text-clip">
+                                                    {file.filename}
+                                                </span>{' '}
+                                                <span className="font-bold">
+                                                    (處理進度:{' '}
+                                                    <span className="font-mono tabular-nums">
+                                                        {progress}%{' '}
+                                                        {uploading
+                                                            ? '上傳中...'
+                                                            : isProcessing
+                                                              ? '轉檔中...'
+                                                              : downloadUrl
+                                                                ? '轉檔完成!'
+                                                                : error
+                                                                  ? error
+                                                                  : '待命'}{' '}
+                                                    </span>
+                                                    )
+                                                </span>{' '}
+                                            </>
+                                        }
+                                    />
+                                    <Button
+                                        startIcon={<FileDownloadIcon />}
+                                        variant={'contained'}
+                                        color="success"
+                                        onClick={handleDownload}
+                                        disabled={
+                                            uploading ||
+                                            isProcessing ||
+                                            !downloadUrl
+                                        }
+                                    >
+                                        下載 MP3 檔
+                                    </Button>
+                                </ListItem>{' '}
+                                <LinearProgress
+                                    className="flex-1 w-full"
+                                    variant="determinate"
+                                    value={progress}
+                                    aria-label="Upload video"
+                                />
+                                <Divider />
+                            </>
+                        ))}
+                    </List>
+
+                    <FooterCredits />
                 </div>
             </div>
         </>

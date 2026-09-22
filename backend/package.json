@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3-backend",
-    "version": "2.0.3",
+    "version": "2.1.0-SNAPSHOT",
     "private": "true",
     "description": "Express backend for converting MP4 to MP3",
     "license": "MIT",
@@ -9,12 +9,13 @@
     "main": "dist/index.js",
     "scripts": {
         "dev": "tsx watch index.ts",
-        "build": "esbuild index.ts --bundle --platform=node --target=node24 --format=esm \"--banner:js=delete process.env.AWS_PROFILE; import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=dist/index.js --sourcemap",
+        "build": "esbuild bin/www --bundle --platform=node --target=node24 --format=esm \"--banner:js=delete process.env.AWS_PROFILE; import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=dist/index.js --sourcemap",
         "ci": "tsc --noEmit && vitest run",
         "typecheck": "tsc --noEmit",
         "test": "vitest run"
     },
     "dependencies": {
+        "cors": "^2.8.6",
         "express": "^5.2.1"
     }
 }
