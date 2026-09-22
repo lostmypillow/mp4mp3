@@ -3,7 +3,7 @@
 # ==========================================
 FROM node:24-trixie AS builder
 WORKDIR /app
-ARG FRONTEND_BUILD_MODE=local-dev
+ARG FRONTEND_BUILD_MODE='.'
 # 1. Copy root and workspace package manifests
 COPY package*.json ./
 COPY backend/package*.json ./backend/
@@ -35,8 +35,7 @@ ENV NODE_ENV=production
 # Distroless images include a built-in non-root user named "nonroot" (UID 65532)
 USER nonroot:nonroot
 
-COPY --from=mwader/static-ffmpeg:7.1 /ffmpeg /usr/local/bin/ffmpeg
-
+COPY --from=mwader/static-ffmpeg:7.1 /ffmpeg /ffprobe /usr/local/bin/
 COPY --from=builder /app/backend/dist ./dist
 COPY --from=builder /app/backend/package.json ./package.json
 
@@ -44,4 +43,4 @@ EXPOSE 3000
 
 # Distroless Node image automatically invokes 'node' behind the scenes.
 # The CMD argument directly passes your entry point script file to Node.
-CMD ["--enable-source-maps", "dist/index.js"]
+CMD ["dist/index.js"]
