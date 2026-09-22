@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3",
-    "version": "2.0.3",
+    "version": "2.1.0-SNAPSHOT",
     "description": "Full stack application for converting MP4 files to MP3 for my dad.",
     "license": "MIT",
     "author": "lostmypillow",
@@ -49,6 +49,7 @@
         "eslint-plugin-react-hooks": "^7.1.1",
         "eslint-plugin-react-refresh": "^0.5.3",
         "globals": "^17.8.0",
+        "prettier": "^3.9.6",
         "tsx": "^4.23.0",
         "typescript": "~6.0.2",
         "typescript-eslint": "^8.68.0",

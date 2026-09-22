@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     env_file:
-      - backend/.env.dev
+      - backend/.env
     environment:
       AWS_PROFILE: ""
       AWS_EC2_METADATA_DISABLED: "true"
@@ -40,7 +40,6 @@ services:
     image: minio/mc
     depends_on:
       - minio
-      - mp4mp3
     entrypoint: |
       /bin/sh -c "
       echo 'Waiting for MinIO...';

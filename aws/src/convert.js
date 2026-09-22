@@ -8,6 +8,7 @@ import { execFile as execFileCallback } from 'node:child_process'
 import * as fs from 'node:fs'
 import { pipeline } from 'node:stream/promises'
 import util from 'node:util'
+import { convertMp4ToMp3, getVideoDuration } from './ffmpegOperations.js'
 const execFile = util.promisify(execFileCallback)
 const s3 = new S3Client({
     endpoint: process.env.SELF_HOSTED_S3_ENDPOINT,
@@ -82,18 +83,16 @@ export const handler = async (event) => {
 
         console.time('FFmpeg Conversion')
         // 3. Use execFile to prevent shell injection hazards
-        await execFile('ffmpeg', [
-            '-y',
-            '-i',
+        const totalDuration = await getVideoDuration(inputPath)
+
+        await convertMp4ToMp3(
             inputPath,
-            '-vn',
-            '-acodec',
-            'libmp3lame',
-            '-q:a',
-            '2',
             outputPath,
-        ])
-        console.timeEnd('FFmpeg Conversion')
+            totalDuration,
+            (progress) => {
+                console.log(`Progress: ${progress}`)
+            }
+        )
 
         // 4. Construct valid output key replacing .mp4 with .mp3
         const outputKey = objectKey.replace(/\.mp4$/i, '.mp3')
