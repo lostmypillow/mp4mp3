@@ -3,22 +3,13 @@
         "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": [
-            "node"
-        ],
+        "types": ["node"],
         "allowJs": true,
-        "skipLibCheck": true,
-        "noEmit": true
+        "skipLibCheck": true
     },
-    "include": [
-        "eslint.config.ts",
-        "prettier.config.mjs",
-        "aws/**/*",
-        "backend/**/*"
-    ],
-    "exclude": [
-        "**/node_modules",
-        "**/dist",
-        "**/cdk.out"
-    ]
+    "files": [],
+    "include": ["eslint.config.ts"],
+    "references": [{ "path": "./frontend" }, { "path": "./backend" }],
+
+    "exclude": ["**/node_modules", "**/dist", "**/cdk.out"]
 }

@@ -2,7 +2,7 @@
     "name": "mp4mp3",
     "version": "2.1.0-SNAPSHOT",
     "description": "Full stack application for converting MP4 files to MP3 for my dad.",
-    "license": "MIT",
+    "license": "GNU AGPLv3",
     "author": "lostmypillow",
     "homepage": "https://github.com/lostmypillow/mp4mp3#readme",
     "bugs": {
@@ -12,34 +12,28 @@
         "type": "git",
         "url": "git+https://github.com/lostmypillow/mp4mp3.git"
     },
-    "type": "commonjs",
+    "type": "module",
     "main": "index.js",
     "scripts": {
-        "ci": "npm run typecheck && npm run lint && npm run test",
-        "typecheck": "tsc --noEmit",
-        "lint": "eslint .",
-        "test": "vitest run",
-        "test:aws": "vitest run --dir aws",
-        "test:backend": "vitest run --dir backend",
-        "test:e2e": "docker compose up -d --build && playwright test; docker compose down",
-        "prod:up": "docker compose -f compose.prod.yaml up -d --build",
-        "prod:down": "docker compose -f compose.prod.yaml down",
-        "staging:up": "docker compose -f compose.dev.yaml up -d --build",
-        "staging:down": "docker compose -f compose.dev.yaml down"
+        "ci": "npm run lint && npm run test",
+        "lint": "node ./node_modules/ts7/bin/tsc -b && eslint . --ignore-pattern 'coverage/**'",
+        "test": "vitest run --coverage",
+        "e2e": "docker compose up -d --build && npm run deploy --workspace=frontend && playwright install && playwright test; docker compose down"
     },
     "workspaces": [
         "frontend",
-        "aws",
         "backend"
     ],
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@playwright/test": "^1.50.0",
         "@types/aws-lambda": "^8.10.162",
+        "@types/debug": "^4.1.13",
         "@types/express": "^5.0.6",
-        "@types/node": "^24.13.3",
+        "@types/node": "^24.19.0",
         "@types/react": "^19.2.17",
         "@types/react-dom": "^19.2.3",
+        "@typescript/native": "npm:typescript@^7.0.2",
         "@vitejs/plugin-react": "^6.0.4",
         "aws-cdk": "2.1134.0",
         "aws-sdk-client-mock": "^4.1.0",
@@ -50,11 +44,10 @@
         "eslint-plugin-react-refresh": "^0.5.3",
         "globals": "^17.8.0",
         "prettier": "^3.9.6",
-        "tsx": "^4.23.0",
-        "typescript": "~6.0.2",
+        "ts7": "npm:typescript@^7.0.2",
+        "typescript": "npm:@typescript/typescript6@^6.0.2",
         "typescript-eslint": "^8.68.0",
         "vite": "^8.2.0",
-        "vitest": "^4.1.11",
-        "zod": "^4.4.3"
+        "vitest": "^4.1.11"
     }
 }

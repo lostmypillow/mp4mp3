@@ -2,11 +2,11 @@ name: CI & Staging Deploy (PR)
 
 on:
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
 
 jobs:
   test:
-    name: Run Unit & Integration Tests
+    name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -24,9 +24,52 @@ jobs:
       - name: Run CI Checks (Typecheck, Lint & Vitest)
         run: npm run ci
 
-  deploy-staging:
-    name: Deploy Staging Stack
+  e2e-test:
+    name: Run End to end testing
     needs: test
+    runs-on: host
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Run Playwright
+        run: npm run test:e2e
+
+  deploy-frontend:
+    needs: [test, e2e-test]
+    name: Deploy dev website to MinIO
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build website
+        run: npm run build:dev --workspace=frontend
+
+      - name: Deploy website
+        run: npm run deploy:dev --workspace=frontend
+
+
+  deploy-api:
+    name: Deploy prod API to Docker
+    needs: [test, e2e-test, deploy-frontend]
     runs-on: host
     steps:
       - name: Checkout Code

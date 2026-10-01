@@ -13,6 +13,8 @@ export default tseslint.config(
             '**/cdk.out/**',
             '**/node_modules/**',
             'frontend/**',
+            'coverage/', // Handles root level (/Users/.../mp4mp3/coverage/)
+            '**/coverage/',
         ],
     },
     js.configs.recommended,
