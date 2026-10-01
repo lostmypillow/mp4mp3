@@ -1,15 +1,28 @@
 services:
-  mp4mp3:
-    image: mp4mp3
+  mp4mp3-dev:
+    container_name: mp4mp3-dev
     build:
       context: .
       dockerfile: ./Dockerfile
+      network: host
     env_file:
       - .env.dev
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     deploy:
       resources:
         limits:
           cpus: '1.0'
           memory: 256M
+    dns:
+      - 192.168.50.2
+      - 1.1.1.1
+    networks:
+      proxy-net:
+
+
+networks:
+  proxy-net:
+    external: true
+
+
