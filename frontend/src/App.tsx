@@ -1,13 +1,7 @@
-import { useState, useCallback, useEffect, Component } from 'react'
+import { type ChangeEvent, useCallback, useEffect, useState } from 'react'
 import Button from '@mui/material/Button'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import LinearProgress from '@mui/material/LinearProgress'
-import { styled } from '@mui/material/styles'
-import AppBar from '@mui/material/AppBar'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
-import GitHubIcon from '@mui/icons-material/GitHub'
-import IconButton from '@mui/material/IconButton'
 import FooterCredits from './FooterCredits.tsx'
 import HeaderBar from './HeaderBar.tsx'
 import {
@@ -19,40 +13,28 @@ import {
 } from '@mui/material'
 import FolderIcon from '@mui/icons-material/Folder'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
-const VisuallyHiddenInput = styled('input')({
-    clip: 'rect(0 0 0 0)',
-    clipPath: 'inset(50%)',
-    height: 1,
-    overflow: 'hidden',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    whiteSpace: 'nowrap',
-    width: 1,
-})
+import { VisuallyHiddenInput } from './VisuallyHiddenInput.tsx'
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
-function App({ onUploadComplete }) {
-    const [uploading, setUploading] = useState(false)
-    const [progress, setProgress] = useState(0)
-    const [error, setError] = useState(null)
+function App() {
+    const [uploading, setUploading] = useState<boolean>(false)
+    const [progress, setProgress] = useState<number>(0)
+    const [error, setError] = useState<string | null>(null)
     const [fileKey, setFileKey] = useState('')
-    const [isProcessing, setIsProcessing] = useState(false)
-    const [downloadUrl, setDownloadUrl] = useState('') // New state to hold the final URL
-    const [downloadList, setDownloadList] = useState([])
-    const uploadFile = useCallback(
-        async (file) => {
+    const [isProcessing, setIsProcessing] = useState<boolean>(false)
+    const [downloadUrl, setDownloadUrl] = useState<string>('')
+    const [downloadList, setDownloadList] = useState<File[]>([])
+    const uploadFile: (file: File) => Promise<void> = useCallback(
+        async (file: File) => {
             setUploading(true)
             setProgress(0)
             setError(null)
             setFileKey('')
-            setDownloadUrl('') // Reset URL on new upload
+            setDownloadUrl('')
             setIsProcessing(false)
 
             try {
                 const response = await fetch(
-                    import.meta.env.VITE_UPLOAD_ENDPOINT,
+                    `${import.meta.env.VITE_API_URL}/upload`,
                     {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -84,7 +66,7 @@ function App({ onUploadComplete }) {
                     })
 
                     xhr.addEventListener('load', () => {
-                        if (xhr.status === 200) {
+                        if (xhr.status >= 200 && xhr.status < 300) {
                             resolve()
                         } else {
                             reject(
@@ -104,116 +86,128 @@ function App({ onUploadComplete }) {
                     xhr.send(file)
                 })
 
-                onUploadComplete?.({
-                    key,
-                    filename: file.name,
-                    size: file.size,
-                })
-
-                // The file is fully uploaded. We trigger the background processing loop.
                 setIsProcessing(true)
             } catch (e) {
-                setError(e.message)
+                if (e instanceof Error) {
+                    setError(e.message)
+                } else {
+                    setError('Unknown error occurred!')
+                }
             } finally {
                 setUploading(false)
             }
         },
-        [onUploadComplete]
+        []
     )
+    async function showNotification(): Promise<void> {
+        if ('Notification' in window) {
+            let permission: 'default' | 'denied' | 'granted' =
+                Notification.permission
 
-    // This useEffect is entirely independent of user clicks.
-    // It watches `isProcessing` and runs automatically when it becomes true.
-    useEffect(() => {
-        // We use an active flag to prevent React state errors if the component unmounts
-        let isActive = true
+            if (permission !== 'granted' && permission !== 'denied') {
+                permission = await Notification.requestPermission()
+            }
 
-        const pollServer = async () => {
+            if (permission === 'granted') {
+                new Notification('轉檔完成！', {
+                    body: '可以下載 mp3 了！',
+                    icon: '/logo.png',
+                })
+            }
+        }
+    }
+    useEffect((): (() => void) => {
+        let isActive: boolean = true
+        let eventSource: null | EventSource = null
+
+        const pollServer: () => Promise<void> = async () => {
             if (!isProcessing || !fileKey) return
 
             const uuid = fileKey.split('/').at(0)
-            if (import.meta.env.DEV) {
-                // Open SSE connection to local Express backend
-                const sseUrl = `${import.meta.env.VITE_STREAM_ENDPOINT}${uuid}`
-                const eventSource = new EventSource(sseUrl)
-                eventSource.onmessage = (event) => {
+
+            if (import.meta.env.VITE_IS_AWS === 'false') {
+                const sseUrl = `${import.meta.env.VITE_API_URL}/convert/stream?uuid=${uuid}`
+                eventSource = new EventSource(sseUrl)
+
+                eventSource.onmessage = async (event) => {
                     if (!isActive) return
-                    const data = JSON.parse(event.data)
-                    if (data.progress) {
-                        setProgress(50 + Math.round(data.progress * 50))
-                    }
-                    if (data.status === 'complete') {
-                        setDownloadUrl(data.url)
-                        setIsProcessing(false)
-                        eventSource.close()
+
+                    try {
+                        const data = JSON.parse(event.data)
+
+                        if (data.progress !== undefined) {
+                            setProgress(50 + Math.round(data.progress * 50))
+
+                            if (data.progress >= 1 && eventSource) {
+                                eventSource.close()
+
+                                const params = new URLSearchParams({
+                                    uuid: uuid ?? '',
+                                })
+                                const endpoint = `${import.meta.env.VITE_API_URL}/download/?${params}`
+
+                                const res: Response = await fetch(endpoint)
+                                if (!res.ok)
+                                    throw new Error(
+                                        `Download API failed: ${res.status}`
+                                    )
+
+                                const downloadData = await res.json()
+
+                                if (isActive && downloadData.url) {
+                                    setDownloadUrl(downloadData.url)
+                                    setIsProcessing(false)
+                                    await showNotification()
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        if (isActive) {
+                            console.error('Processing failed:', err)
+                            setError('Failed to fetch download link.')
+                            setIsProcessing(false)
+                            eventSource?.close()
+                        }
                     }
                 }
+
                 eventSource.onerror = (err) => {
                     console.error('SSE Error:', err)
-                    eventSource.close()
-                }
-                return () => {
-                    isActive = false
-                    eventSource.close()
-                }
-            }
-
-            const params = new URLSearchParams({ uuid })
-            const endpoint = `${import.meta.env.VITE_DOWNLOAD_ENDPOINT}?${params}`
-
-            try {
-                while (isActive && isProcessing) {
-                    const res = await fetch(endpoint)
-
-                    if (!res.ok) {
-                        throw new Error(`Failed to check status: ${res.status}`)
+                    if (isActive) {
+                        setError('Connection lost.')
+                        setIsProcessing(false)
                     }
-
-                    const data = await res.json()
-
-                    if (data.status === 'complete') {
-                        if (isActive) {
-                            setDownloadUrl(data.url) // Save the ready-to-use URL
-                            setIsProcessing(false) // Stop the polling loop
-                        }
-                        break
-                    } else {
-                        await sleep(5000)
-                    }
+                    eventSource?.close()
                 }
-            } catch (err) {
-                if (isActive) {
-                    console.error('Polling failed:', err)
-                    setError('Failed to process the file.')
-                    setIsProcessing(false)
-                }
+
+                return
             }
         }
 
         pollServer()
 
-        // Cleanup function runs if the component unmounts mid-poll
         return () => {
             isActive = false
+            if (eventSource) eventSource.close() // 4. Guaranteed cleanup on unmount
         }
-    }, [isProcessing, fileKey]) // The array tells React which variables this effect depends on
+    }, [isProcessing, fileKey])
 
-    const handleFileSelect = (event) => {
-        const file = event.target.files[0]
-        setDownloadList([
-            {
-                filename: file.name,
-            },
-        ])
-        if (file) uploadFile(file)
+    const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files) {
+            const file = event.target.files[0]
+            setDownloadList([file])
+            if (file) {
+                uploadFile(file).then(() => console.log('File uploaded'))
+            }
+        }
     }
 
-    // handleDownload no longer worries about backend fetching. It just triggers the browser.
     const handleDownload = () => {
         if (!downloadUrl) return
 
         const link = document.createElement('a')
         link.href = downloadUrl
-        link.download = fileKey.split('/').at(1).replace('mp4', 'mp3')
+        link.download = fileKey?.split('/')?.at(1)?.replace('mp4', 'mp3') ?? ''
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -234,7 +228,7 @@ function App({ onUploadComplete }) {
                             startIcon={<CloudUploadIcon />}
                             className="shrink-0"
                         >
-                            {`上傳 MP4 (${import.meta.env.VITE_MAX_FILE_SIZE_LABEL || '<600MB'})`}
+                            上傳 MP4
                             <VisuallyHiddenInput
                                 type="file"
                                 onChange={handleFileSelect}
@@ -245,7 +239,7 @@ function App({ onUploadComplete }) {
                     </div>
 
                     <List className="w-full">
-                        {downloadList.map((file) => (
+                        {downloadList.map((file: File) => (
                             <>
                                 <ListItem>
                                     <ListItemIcon>
@@ -256,12 +250,15 @@ function App({ onUploadComplete }) {
                                         primary={
                                             <>
                                                 <span className="truncate md:whitespace-normal md:overflow-visible md:text-clip">
-                                                    {file.filename}
-                                                </span>{' '}
+                                                    {file.name}
+                                                </span>
                                                 <span className="font-bold">
-                                                    (處理進度:{' '}
+                                                    : 處理進度:{' '}
                                                     <span className="font-mono tabular-nums">
                                                         {progress}%{' '}
+                                                    </span>
+                                                    <span className="font-bold">
+                                                        | 處理狀態:{' '}
                                                         {uploading
                                                             ? '上傳中...'
                                                             : isProcessing
@@ -272,7 +269,6 @@ function App({ onUploadComplete }) {
                                                                   ? error
                                                                   : '待命'}{' '}
                                                     </span>
-                                                    )
                                                 </span>{' '}
                                             </>
                                         }
@@ -280,7 +276,7 @@ function App({ onUploadComplete }) {
                                     <Button
                                         startIcon={<FileDownloadIcon />}
                                         variant={'contained'}
-                                        color="success"
+                                        color="primary"
                                         onClick={handleDownload}
                                         disabled={
                                             uploading ||
