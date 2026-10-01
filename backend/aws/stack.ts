@@ -10,8 +10,8 @@ import * as sns from 'aws-cdk-lib/aws-sns'
 import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions'
 import * as iam from 'aws-cdk-lib/aws-iam'
 import { Construct } from 'constructs'
+import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-
 export class Mp4mp3Stack extends cdk.Stack {
     constructor(scope: Construct, id: string, props?: cdk.StackProps) {
         super(scope, id, props)
@@ -52,7 +52,10 @@ export class Mp4mp3Stack extends cdk.Stack {
             this,
             'mp4mp3-upload',
             {
-                entry: path.join(import.meta.dirname, '../src', 'upload.js'),
+                entry: path.resolve(
+                    path.dirname(fileURLToPath(import.meta.url)),
+                    './src/handler.js'
+                ),
                 handler: 'handler',
                 bundling: {
                     // Force Docker bundling so esbuild compiles inside a Linux x86_64 container
@@ -61,10 +64,15 @@ export class Mp4mp3Stack extends cdk.Stack {
                     // Output ESM format
                     format: lambdaNode.OutputFormat.ESM,
                     target: 'node24',
-
+                    externalModules: [
+                        '@aws-sdk/*',
+                        '@smithy/*',
+                        '@mmomtchev/ffmpeg',
+                    ],
                     loader: {
                         '.node': 'copy',
                     },
+                    nodeModules: ['@mmomtchev/ffmpeg'],
 
                     banner: [
                         'delete process.env.AWS_PROFILE;',
@@ -72,7 +80,7 @@ export class Mp4mp3Stack extends cdk.Stack {
                         'const require = createRequire(import.meta.url);',
                     ].join(' '),
                 },
-                runtime: lambda.Runtime.NODEJS_24_X,
+                runtime: lambda.Runtime.NODEJS_22_X,
                 architecture: lambda.Architecture.X86_64,
                 memorySize: 256,
                 timeout: cdk.Duration.seconds(30),
@@ -89,11 +97,7 @@ export class Mp4mp3Stack extends cdk.Stack {
                     'https://mp4mp3-public.lostmypillow.com',
                     'http://localhost:5173',
                 ],
-                allowedMethods: [
-                    lambda.HttpMethod.POST,
-                    lambda.HttpMethod.GET,
-                    lambda.HttpMethod.OPTIONS,
-                ],
+                allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET],
                 allowedHeaders: ['Content-Type', 'Authorization'],
                 allowCredentials: true,
                 maxAge: cdk.Duration.hours(1),
@@ -104,11 +108,7 @@ export class Mp4mp3Stack extends cdk.Stack {
             this,
             'mp4mp3-killswitch',
             {
-                entry: path.join(
-                    import.meta.dirname,
-                    '../src',
-                    'killswitch.js'
-                ),
+                entry: path.join(import.meta.dirname, './src', 'killswitch.js'),
                 handler: 'handler',
                 bundling: {
                     minify: true,
@@ -135,7 +135,7 @@ export class Mp4mp3Stack extends cdk.Stack {
             {
                 runtime: lambda.Runtime.NODEJS_24_X,
                 handler: 'handler',
-                entry: path.join(import.meta.dirname, '../src', 'cleaner.js'),
+                entry: path.join(import.meta.dirname, './src', 'cleaner.js'),
                 timeout: cdk.Duration.seconds(60),
                 memorySize: 128,
                 architecture: lambda.Architecture.ARM_64,

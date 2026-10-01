@@ -6,10 +6,7 @@ import {
     AbortMultipartUploadCommand,
 } from '@aws-sdk/client-s3'
 
-const s3 = new S3Client({
-    endpoint: process.env.SELF_HOSTED_S3_ENDPOINT,
-    forcePathStyle: !!process.env.SELF_HOSTED_S3_ENDPOINT,
-})
+const s3 = new S3Client({})
 
 // noinspection JSUnusedGlobalSymbols
 export const handler = async () => {
