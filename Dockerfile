@@ -1,16 +1,12 @@
-FROM --platform=linux/amd64 node:24-slim AS builder
+FROM node:24-slim AS builder
 
 WORKDIR /app
-
+ENV NODE_OPTIONS="--dns-result-order=ipv4first"
 COPY package*.json ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
-RUN --mount=type=cache,target=/root/.npm \
-    npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000 && \
-    npm ci --no-audit --no-fund
+RUN npm ci
 
 COPY backend/ ./backend/
 
@@ -20,7 +16,7 @@ RUN npm run build --workspace=backend
 RUN npm prune --omit=dev
 
 
-FROM --platform=linux/amd64 node:24-slim AS runner
+FROM node:24-slim AS runner
 
 WORKDIR /app
 
