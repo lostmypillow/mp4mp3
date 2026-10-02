@@ -21,6 +21,8 @@ Born out of a desire to give my father a better conversion experience than "I'm 
 ### Prerequisites
 
 - Node: https://nodejs.org/en/download
+- FFmpeg
+- act: from `brew install act`
 - Docker
     - Linux: https://docs.docker.com/engine/install/
     - Other OSes: https://docs.docker.com/desktop/
@@ -90,6 +92,7 @@ Alternatively, if you've changed the enviroment variables for MinIO server IP in
 ```
 npm run dev --workspace=backend
 ```
+
 
 ## License
 

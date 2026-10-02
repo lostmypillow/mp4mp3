@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-s3'
 import * as fs from 'node:fs'
 import { pipeline } from 'node:stream/promises'
-import { convertMp4ToMp3 } from '../lib/ffmpegOperations.js'
+import { convertMp4ToMp3 } from '../lib/convertMp4ToMp3.js'
 import { internalS3Client } from '../lib/s3Client.js'
 
 let inputPath: string, outputPath: string, bucketName: string, objectKey: string

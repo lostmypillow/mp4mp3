@@ -1,15 +1,10 @@
 {
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": ["node"],
-        "allowJs": true,
-        "skipLibCheck": true
+        "types": ["node"]
     },
     "files": [],
-    "include": ["eslint.config.ts"],
-    "references": [{ "path": "./frontend" }, { "path": "./backend" }],
-
-    "exclude": ["**/node_modules", "**/dist", "**/cdk.out"]
+    "include": ["eslint.config.ts"]
 }

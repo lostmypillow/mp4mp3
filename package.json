@@ -15,15 +15,16 @@
     "type": "module",
     "main": "index.js",
     "scripts": {
-        "ci": "npm run lint && npm run test",
-        "lint": "node ./node_modules/ts7/bin/tsc -b && eslint . --ignore-pattern 'coverage/**'",
+        "ci": "pnpm run lint && pnpm run test",
+        "lint": "node ./node_modules/ts7/bin/tsc -b --noEmit && eslint . --ignore-pattern 'coverage/**'",
         "test": "vitest run --coverage",
-        "e2e": "docker compose up -d --build && npm run deploy --workspace=frontend && playwright install && playwright test; docker compose down"
+        "e2e:local": "docker compose down && docker compose up -d --build && pnpm -F frontend deploy && playwright install && playwright test; docker compose down",
+        "e2e:debug": "docker compose up -d --build && pnpm -F frontend deploy && playwright install && playwright test --ui; docker compose down",
+        "e2e:ci": "playwright test",
+        "synth": "cdk synth",
+        "diff": "cdk diff",
+        "deploy": "cdk deploy"
     },
-    "workspaces": [
-        "frontend",
-        "backend"
-    ],
     "devDependencies": {
         "@eslint/js": "^10.0.1",
         "@playwright/test": "^1.50.0",

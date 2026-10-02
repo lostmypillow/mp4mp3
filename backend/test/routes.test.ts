@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import app from '../index.js'
+import app from '../src/index.js'
 import type { Server } from 'node:http'
 import { mockClient } from 'aws-sdk-client-mock'
 import { ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3'
@@ -99,7 +99,9 @@ describe('Express App Integration Tests (backend/index.ts)', () => {
             },
         })
 
-        expect(res.headers.get('access-control-allow-origin')).toBe('http://localhost:5173')
+        expect(res.headers.get('access-control-allow-origin')).toBe(
+            'http://localhost:5173'
+        )
         expect(res.headers.get('access-control-allow-credentials')).toBe('true')
     })
 })

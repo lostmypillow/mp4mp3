@@ -1,7 +1,7 @@
 import express, { type Express } from 'express'
-import ConvertRouter from './src/routes/convert.js'
-import UploadRouter from './src/routes/upload.js'
-import DownloadRouter from './src/routes/download.js'
+import ConvertRouter from './routes/convert.js'
+import UploadRouter from './routes/upload.js'
+import DownloadRouter from './routes/download.js'
 import cors from 'cors'
 
 const app: Express = express()

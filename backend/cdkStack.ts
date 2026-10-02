@@ -47,42 +47,43 @@ export class Mp4mp3Stack extends cdk.Stack {
                 },
             },
         })
-
+        const ffmpegLayer = new lambda.LayerVersion(this, 'FfmpegArm64Layer', {
+            code: lambda.Code.fromDockerBuild(
+                path.dirname(fileURLToPath(import.meta.url)),
+                {
+                    platform: 'linux/arm64',
+                }
+            ),
+            compatibleArchitectures: [lambda.Architecture.ARM_64],
+            compatibleRuntimes: [
+                lambda.Runtime.NODEJS_24_X,
+                lambda.Runtime.PYTHON_3_14,
+            ],
+            description: 'Static FFmpeg/FFprobe binaries for ARM64 Lambda',
+        })
         const mainHandler = new lambdaNode.NodejsFunction(
             this,
             'mp4mp3-upload',
             {
                 entry: path.resolve(
                     path.dirname(fileURLToPath(import.meta.url)),
-                    './src/handler.js'
+                    './src/lambda/handler.ts'
                 ),
                 handler: 'handler',
                 bundling: {
-                    // Force Docker bundling so esbuild compiles inside a Linux x86_64 container
-                    forceDockerBundling: true,
-
-                    // Output ESM format
                     format: lambdaNode.OutputFormat.ESM,
                     target: 'node24',
-                    externalModules: [
-                        '@aws-sdk/*',
-                        '@smithy/*',
-                        '@mmomtchev/ffmpeg',
-                    ],
-                    loader: {
-                        '.node': 'copy',
-                    },
-                    nodeModules: ['@mmomtchev/ffmpeg'],
-
+                    externalModules: ['@aws-sdk/*', '@smithy/*'],
                     banner: [
                         'delete process.env.AWS_PROFILE;',
                         "import { createRequire } from 'module';",
                         'const require = createRequire(import.meta.url);',
                     ].join(' '),
                 },
-                runtime: lambda.Runtime.NODEJS_22_X,
-                architecture: lambda.Architecture.X86_64,
+                runtime: lambda.Runtime.NODEJS_24_X,
+                architecture: lambda.Architecture.ARM_64,
                 memorySize: 256,
+                layers: [ffmpegLayer],
                 timeout: cdk.Duration.seconds(30),
                 environment: {
                     UPLOAD_BUCKET_NAME: bucket.bucketName,
@@ -108,7 +109,12 @@ export class Mp4mp3Stack extends cdk.Stack {
             this,
             'mp4mp3-killswitch',
             {
-                entry: path.join(import.meta.dirname, './src', 'killswitch.js'),
+                entry: path.join(
+                    import.meta.dirname,
+                    './src',
+                    'lambda',
+                    'killswitch.ts'
+                ),
                 handler: 'handler',
                 bundling: {
                     minify: true,
@@ -135,7 +141,12 @@ export class Mp4mp3Stack extends cdk.Stack {
             {
                 runtime: lambda.Runtime.NODEJS_24_X,
                 handler: 'handler',
-                entry: path.join(import.meta.dirname, './src', 'cleaner.js'),
+                entry: path.join(
+                    import.meta.dirname,
+                    './src',
+                    'lambda',
+                    'cleaner.ts'
+                ),
                 timeout: cdk.Duration.seconds(60),
                 memorySize: 128,
                 architecture: lambda.Architecture.ARM_64,
