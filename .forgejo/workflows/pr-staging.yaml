@@ -6,84 +6,92 @@ on:
 
 jobs:
   test:
-    name: Run Unit Tests
+    name: Run tests and deploy frontend
     runs-on: ubuntu-latest
     steps:
       - name: Verify WARP Outbound Routing
         run: |
-            echo "=== Proxy Environment Variables ==="
-            env | grep -iE 'proxy' || echo "No proxy env set"
-            
-            echo "=== Cloudflare Trace ==="
-            curl -fsSL https://cloudflare.com/cdn-cgi/trace | grep -E 'ip|colo|warp'
+          echo "=== Proxy Environment Variables ==="
+          env | grep -iE 'proxy' || echo "No proxy env set"
+          
+          echo "=== Cloudflare Trace ==="
+          curl -fsSL https://cloudflare.com/cdn-cgi/trace | grep -E 'ip|colo|warp'
+
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Dependencies
-        run: npm ci --prefer-offline --no-audit --no-fund
+        run: pnpm install --frozen-lockfile
 
       - name: Run CI Checks (Typecheck, Lint & Vitest)
-        run: npm run ci
-
-#  e2e-test:
-#    name: Run End to end testing
-#    needs: test
-#    runs-on: host
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v4
-#      - name: Setup Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: 24
-#          cache: 'npm'
-#
-#      - name: Install Dependencies
-#        run: npm ci
-#
-#      - name: Run Playwright
-#        run: npm run e2e
-
-#  deploy-frontend:
-#    needs: [test]
-#    name: Deploy dev website to MinIO
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout Code
-#        uses: actions/checkout@v4
-#
-#      - name: Setup Node.js
-#        uses: actions/setup-node@v4
-#        with:
-#          node-version: 24
-#          cache: 'npm'
-#
-#      - name: Install Dependencies
-#        run: npm ci
-
-      - name: Build website
-        run: npm run build:dev --workspace=frontend
+        run: pnpm run ci
 
       - name: Deploy website
-        run: npm run deploy:dev --workspace=frontend
-
+        run: pnpm run deploy:dev --workspace=frontend
 
   deploy-api:
-    name: Deploy prod API to Docker
+    name: Deploy dev API to Docker
     needs: [test]
     runs-on: host
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Build & Deploy Self-Hosted Dev Containers
+      - name: Build & Deploy Self-Hosted dev Containers
+        env:
+          DOCKER_BUILDKIT: 1
+          COMPOSE_DOCKER_CLI_BUILD: 1
         run: |
-          echo "Deploying updated Docker containers to Dev environment..."
+          echo "Deploying updated Docker containers to dev environment..."
           docker compose -f compose.dev.yaml down
           docker compose -f compose.dev.yaml up -d --build
+
+  e2e:
+    name: E2E test
+    needs: [deploy-api]
+    runs-on: host
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Playwright Binaries
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
+      - name: Install Playwright Browsers (if missing)
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run Playwright against Dev Deployment
+        env:
+          CI: true
+          E2E_URL: "https://mp4mp3-dev.lostmypillow.com"
+        run: pnpm run e2e

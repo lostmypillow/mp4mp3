@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib/core'
-import { Mp4mp3Stack } from './stack.js'
+import { Mp4mp3Stack } from './cdkStack.js'
 
 const app = new cdk.App()
 new Mp4mp3Stack(app, 'Mp4mp3Stack', {

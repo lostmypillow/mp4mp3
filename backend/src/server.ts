@@ -3,7 +3,7 @@ delete process.env.AWS_PROFILE
 console.log(process.env)
 import app from './index.js'
 import createDebug from 'debug'
-import { internalS3Client } from './src/lib/s3Client.js'
+import { internalS3Client } from './lib/s3Client.js'
 const debug = createDebug('test:server')
 import * as http from 'http'
 import {

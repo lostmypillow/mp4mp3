@@ -6,10 +6,15 @@ services:
       dockerfile: ./Dockerfile
     env_file:
       - .env.prod
-    ports:
-      - "3000:3000"
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 512M
+    expose:
+      - "3000"
+    dns:
+      - 192.168.50.2
+      - 1.1.1.1
+    networks:
+        proxy-net:
+
+
+networks:
+    proxy-net:
+      external: true

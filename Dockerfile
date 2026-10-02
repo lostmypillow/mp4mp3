@@ -1,24 +1,29 @@
-FROM node:24-slim AS builder
+FROM node:24-slim AS base
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+FROM base AS builder
 WORKDIR /app
-ENV NODE_OPTIONS="--dns-result-order=ipv4first"
-COPY package*.json ./
+
+COPY package*.json pnpm-*.yaml ./
 COPY frontend/package*.json ./frontend/
 COPY backend/package*.json ./backend/
 
-RUN npm ci
-
-COPY backend/ ./backend/
-
-ENV NODE_PATH=/app
-
-RUN npm run build --workspace=backend
-RUN npm prune --omit=dev
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
+COPY . .
+RUN --mount=type=cache,id=corepack,target=/root/.cache/corepack \
+    pnpm -F backend build
 
 
 FROM node:24-slim AS runner
-
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ffmpeg && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 
