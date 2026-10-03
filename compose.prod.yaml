@@ -1,6 +1,6 @@
 services:
-  mp4mp3:
-    image: mp4mp3
+  mp4mp3-prod:
+    container_name: mp4mp3-prod
     build:
       context: .
       dockerfile: ./Dockerfile

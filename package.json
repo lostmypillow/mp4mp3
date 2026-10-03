@@ -1,6 +1,6 @@
 {
     "name": "mp4mp3",
-    "version": "2.1.0-SNAPSHOT",
+    "version": "2.1.0",
     "description": "Full stack application for converting MP4 files to MP3 for my dad.",
     "license": "GNU AGPLv3",
     "author": "lostmypillow",
