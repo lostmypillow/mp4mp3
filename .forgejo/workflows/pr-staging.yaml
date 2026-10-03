@@ -93,7 +93,9 @@ jobs:
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright Browsers (if missing)
-        run: pnpm exec playwright install --with-deps
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: pnpm exec playwright install chromium
 
       - name: Run Playwright against Dev Deployment
         env:
