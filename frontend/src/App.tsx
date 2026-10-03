@@ -125,63 +125,63 @@ function App() {
 
             const uuid = fileKey.split('/').at(0)
 
-            if (import.meta.env.VITE_IS_AWS === 'false') {
-                const sseUrl = `${import.meta.env.VITE_API_URL}/convert/stream?uuid=${uuid}`
-                eventSource = new EventSource(sseUrl)
+            // if (import.meta.env.VITE_IS_AWS === 'false') {
+            const sseUrl = `${import.meta.env.VITE_API_URL}/convert/stream?uuid=${uuid}`
+            eventSource = new EventSource(sseUrl)
 
-                eventSource.onmessage = async (event) => {
-                    if (!isActive) return
+            eventSource.onmessage = async (event) => {
+                if (!isActive) return
 
-                    try {
-                        const data = JSON.parse(event.data)
+                try {
+                    const data = JSON.parse(event.data)
 
-                        if (data.progress !== undefined) {
-                            setProgress(50 + Math.round(data.progress * 50))
+                    if (data.progress !== undefined) {
+                        setProgress(50 + Math.round(data.progress * 50))
 
-                            if (data.progress >= 1 && eventSource) {
-                                eventSource.close()
+                        if (data.progress >= 1 && eventSource) {
+                            eventSource.close()
 
-                                const params = new URLSearchParams({
-                                    uuid: uuid ?? '',
-                                })
-                                const endpoint = `${import.meta.env.VITE_API_URL}/download/?${params}`
+                            const params = new URLSearchParams({
+                                uuid: uuid ?? '',
+                            })
+                            const endpoint = `${import.meta.env.VITE_API_URL}/download/?${params}`
 
-                                const res: Response = await fetch(endpoint)
-                                if (!res.ok)
-                                    throw new Error(
-                                        `Download API failed: ${res.status}`
-                                    )
+                            const res: Response = await fetch(endpoint)
+                            if (!res.ok)
+                                throw new Error(
+                                    `Download API failed: ${res.status}`
+                                )
 
-                                const downloadData = await res.json()
+                            const downloadData = await res.json()
 
-                                if (isActive && downloadData.url) {
-                                    setDownloadUrl(downloadData.url)
-                                    setIsProcessing(false)
-                                    await showNotification()
-                                }
+                            if (isActive && downloadData.url) {
+                                setDownloadUrl(downloadData.url)
+                                setIsProcessing(false)
+                                await showNotification()
                             }
                         }
-                    } catch (err) {
-                        if (isActive) {
-                            console.error('Processing failed:', err)
-                            setError('Failed to fetch download link.')
-                            setIsProcessing(false)
-                            eventSource?.close()
-                        }
                     }
-                }
-
-                eventSource.onerror = (err) => {
-                    console.error('SSE Error:', err)
+                } catch (err) {
                     if (isActive) {
-                        setError('Connection lost.')
+                        console.error('Processing failed:', err)
+                        setError('Failed to fetch download link.')
                         setIsProcessing(false)
+                        eventSource?.close()
                     }
-                    eventSource?.close()
                 }
-
-                return
             }
+
+            eventSource.onerror = (err) => {
+                console.error('SSE Error:', err)
+                if (isActive) {
+                    setError('Connection lost.')
+                    setIsProcessing(false)
+                }
+                eventSource?.close()
+            }
+
+            return
+            // }
         }
 
         pollServer()

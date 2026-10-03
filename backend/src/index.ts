@@ -5,7 +5,7 @@ import DownloadRouter from './routes/download.js'
 import cors from 'cors'
 
 const app: Express = express()
-app.use(express.json())
+
 app.use(
     cors({
         origin: [
@@ -14,12 +14,14 @@ app.use(
             'http://localhost:5174',
             'https://mp4mp3-dev.lostmypillow.com',
             'https://mp4mp3-prod.lostmypillow.com',
-            'https://mp4mp3.lostmypillow.com',
+            'https://mp4mp3-public.lostmypillow.com',
+            /^https:\/\/([a-z0-9-]+\.)?mp4mp3\.pages\.dev$/,
         ],
         methods: ['GET', 'POST', 'OPTIONS'],
         credentials: true,
     })
 )
+app.use(express.json())
 app.use('/upload', UploadRouter)
 app.use('/download', DownloadRouter)
 app.use('/convert', ConvertRouter)

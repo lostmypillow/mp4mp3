@@ -61,48 +61,36 @@ export class Mp4mp3Stack extends cdk.Stack {
             ],
             description: 'Static FFmpeg/FFprobe binaries for ARM64 Lambda',
         })
-        const mainHandler = new lambdaNode.NodejsFunction(
-            this,
-            'mp4mp3-upload',
-            {
-                entry: path.resolve(
-                    path.dirname(fileURLToPath(import.meta.url)),
-                    './src/lambda/handler.ts'
-                ),
-                handler: 'handler',
-                bundling: {
-                    format: lambdaNode.OutputFormat.ESM,
-                    target: 'node24',
-                    externalModules: ['@aws-sdk/*', '@smithy/*'],
-                    banner: [
-                        'delete process.env.AWS_PROFILE;',
-                        "import { createRequire } from 'module';",
-                        'const require = createRequire(import.meta.url);',
-                    ].join(' '),
-                },
-                runtime: lambda.Runtime.NODEJS_24_X,
-                architecture: lambda.Architecture.ARM_64,
-                memorySize: 256,
-                layers: [ffmpegLayer],
-                timeout: cdk.Duration.seconds(30),
-                environment: {
-                    UPLOAD_BUCKET_NAME: bucket.bucketName,
-                },
-            }
-        )
+        const mainHandler = new lambdaNode.NodejsFunction(this, 'mp4mp3-api', {
+            functionName: 'mp4mp3-api',
+            entry: path.resolve(
+                path.dirname(fileURLToPath(import.meta.url)),
+                './src/lambda/handler.ts'
+            ),
+            handler: 'handler',
+            bundling: {
+                format: lambdaNode.OutputFormat.ESM,
+                target: 'node24',
+                externalModules: ['@aws-sdk/*', '@smithy/*', 'ffmpeg-static'],
+                banner: [
+                    'delete process.env.AWS_PROFILE;',
+                    "import { createRequire } from 'module';",
+                    'const require = createRequire(import.meta.url);',
+                ].join(' '),
+            },
+            runtime: lambda.Runtime.NODEJS_24_X,
+            architecture: lambda.Architecture.ARM_64,
+            memorySize: 256,
+            layers: [ffmpegLayer],
+            timeout: cdk.Duration.seconds(30),
+            environment: {
+                PATH: '/opt/bin:/usr/local/bin:/usr/bin/:/bin',
+                UPLOAD_BUCKET_NAME: bucket.bucketName,
+            },
+        })
 
         mainHandler.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
-            cors: {
-                allowedOrigins: [
-                    'https://mp4mp3-public.lostmypillow.com',
-                    'http://localhost:5173',
-                ],
-                allowedMethods: [lambda.HttpMethod.POST, lambda.HttpMethod.GET],
-                allowedHeaders: ['Content-Type', 'Authorization'],
-                allowCredentials: true,
-                maxAge: cdk.Duration.hours(1),
-            },
         })
 
         const killSwitchLambda = new lambdaNode.NodejsFunction(
