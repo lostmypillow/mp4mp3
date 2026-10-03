@@ -20,6 +20,11 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      - name: Install FFmpeg
+        run: |
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
