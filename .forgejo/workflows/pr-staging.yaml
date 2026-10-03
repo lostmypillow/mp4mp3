@@ -43,7 +43,7 @@ jobs:
         run: pnpm run ci
 
       - name: Deploy website
-        run: pnpm run deploy:dev --workspace=frontend
+        run: pnpm -F frontend run deploy:dev
 
   deploy-api:
     name: Deploy dev API to Docker

@@ -16,7 +16,7 @@
     "main": "index.js",
     "scripts": {
         "ci": "pnpm run lint && pnpm run test",
-        "lint": "node ./node_modules/ts7/bin/tsc -b --noEmit && eslint . --ignore-pattern 'coverage/**'",
+        "lint": "node ./node_modules/ts7/bin/tsc -b --noEmit && eslint . --ignore-pattern 'coverage/**' && node ./node_modules/ts7/bin/tsc -b --clean",
         "test": "vitest run --coverage",
         "e2e:local": "docker compose down && docker compose up -d --build && pnpm -F frontend deploy && playwright install && playwright test; docker compose down",
         "e2e:debug": "docker compose up -d --build && pnpm -F frontend deploy && playwright install && playwright test --ui; docker compose down",
