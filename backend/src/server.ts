@@ -71,7 +71,7 @@ await internalS3Client.send(
         NotificationConfiguration: {
             QueueConfigurations: [
                 {
-                    QueueArn: 'arn:minio:sqs::mp4mp3:webhook',
+                    QueueArn: `arn:minio:sqs::${process.env.UPLOAD_BUCKET_NAME}:webhook`,
                     Events: ['s3:ObjectCreated:*'],
                 },
             ],
