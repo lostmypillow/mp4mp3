@@ -16,6 +16,12 @@ Link: https://mp4mp3-public.lostmypillow.com
 
 And before you ask, I obviously don't let my dad use the demo version.
 
+
+| Desktop  | Mobile  |
+| :---: | :---: |
+| <img src="./desktop_public.gif" width="460" alt="Desktop Demo"> | <img src="./mobile_public.gif" width="180" alt="Mobile Demo"> |
+
+
 ### Full version
 The same version my dad uses. Unlimited file size and a real-time conversion progress bar.
 
