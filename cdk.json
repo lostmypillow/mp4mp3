@@ -1,5 +1,5 @@
 {
-    "app": "npx tsc && npx tsx bin/cdk.ts",
+    "app": "pnpm exec tsc -b && pnpm dlx tsx backend/cdkEntrypoint.ts",
     "watch": {
         "include": ["**"],
         "exclude": [

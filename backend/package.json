@@ -1,6 +1,6 @@
 {
-    "name": "mp4mp3-backend",
-    "version": "2.0.3",
+    "name": "backend",
+    "version": "2.1.0",
     "private": "true",
     "description": "Express backend for converting MP4 to MP3",
     "license": "MIT",
@@ -8,13 +8,28 @@
     "type": "module",
     "main": "dist/index.js",
     "scripts": {
-        "dev": "tsx watch index.ts",
-        "build": "esbuild index.ts --bundle --platform=node --target=node24 --format=esm \"--banner:js=delete process.env.AWS_PROFILE; import { createRequire } from 'module'; const require = createRequire(import.meta.url);\" --outfile=dist/index.js --sourcemap",
-        "ci": "tsc --noEmit && vitest run",
-        "typecheck": "tsc --noEmit",
-        "test": "vitest run"
+        "dev": "tsx watch --env-file=../.env src/server.ts",
+        "build": "esbuild src/server.ts --bundle --platform=node --target=node24 --format=esm \"--banner:js=delete process.env.AWS_PROFILE; import { createRequire } from 'module'; const require = createRequire(import.meta.url);\"  --outfile=dist/index.js",
+        "typecheck": "node ../node_modules/ts7/bin/tsc -b",
+        "test": "vitest run",
+        "watch": "tsc -w",
+        "ci": "tsc --noEmit && vitest run"
     },
     "dependencies": {
-        "express": "^5.2.1"
+        "@aws-sdk/client-eventbridge": "^3.1101.0",
+        "@aws-sdk/client-s3": "^3.1100.0",
+        "@aws-sdk/s3-request-presigner": "^3.1100.0",
+        "@codegenie/serverless-express": "^5.0.0",
+        "aws-cdk-lib": "^2.263.0",
+        "constructs": "^10.5.0",
+        "cors": "^2.8.6",
+        "express": "^5.2.1",
+        "ffmpeg-static": "^5.3.0",
+        "uuid": "^14.0.1",
+        "zod": "^4.6.5"
+    },
+    "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/node": "^24.19.1"
     }
 }
