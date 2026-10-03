@@ -23,6 +23,7 @@ function App() {
     const [isProcessing, setIsProcessing] = useState<boolean>(false)
     const [downloadUrl, setDownloadUrl] = useState<string>('')
     const [downloadList, setDownloadList] = useState<File[]>([])
+    const [progressType, setProgressType] = useState('determinate')
     const uploadFile: (file: File) => Promise<void> = useCallback(
         async (file: File) => {
             setUploading(true)
@@ -116,79 +117,141 @@ function App() {
             }
         }
     }
-    useEffect((): (() => void) => {
-        let isActive: boolean = true
-        let eventSource: null | EventSource = null
+    const applyCompletedDownload = async (
+        downloadUrl: string,
+        getIsActive: () => boolean
+    ) => {
+        if (getIsActive() && downloadUrl) {
+            setDownloadUrl(downloadUrl)
+            setIsProcessing(false)
+            await showNotification()
+        }
+    }
 
-        const pollServer: () => Promise<void> = async () => {
-            if (!isProcessing || !fileKey) return
+    const fetchDownload = async (uuid: string) => {
+        const res = await fetch(
+            `${import.meta.env.VITE_API_URL}/download/?${new URLSearchParams({ uuid })}`
+        )
+        if (!res.ok && res.status !== 202) {
+            throw new Error(`Download API failed: ${res.status}`)
+        }
+        return res
+    }
 
-            const uuid = fileKey.split('/').at(0)
+    const pollDownloadEvery5Seconds = (
+        uuid: string,
+        getIsActive: () => boolean
+    ): (() => void) => {
+        setProgressType('indeterminate')
+        let timerId: ReturnType<typeof setTimeout> | null = null
 
-            // if (import.meta.env.VITE_IS_AWS === 'false') {
-            const sseUrl = `${import.meta.env.VITE_API_URL}/convert/stream?uuid=${uuid}`
-            eventSource = new EventSource(sseUrl)
+        const check = async () => {
+            if (!getIsActive()) return
 
-            eventSource.onmessage = async (event) => {
-                if (!isActive) return
+            try {
+                const res = await fetchDownload(uuid)
 
-                try {
-                    const data = JSON.parse(event.data)
-
-                    if (data.progress !== undefined) {
-                        setProgress(50 + Math.round(data.progress * 50))
-
-                        if (data.progress >= 1 && eventSource) {
-                            eventSource.close()
-
-                            const params = new URLSearchParams({
-                                uuid: uuid ?? '',
-                            })
-                            const endpoint = `${import.meta.env.VITE_API_URL}/download/?${params}`
-
-                            const res: Response = await fetch(endpoint)
-                            if (!res.ok)
-                                throw new Error(
-                                    `Download API failed: ${res.status}`
-                                )
-
-                            const downloadData = await res.json()
-
-                            if (isActive && downloadData.url) {
-                                setDownloadUrl(downloadData.url)
-                                setIsProcessing(false)
-                                await showNotification()
-                            }
-                        }
-                    }
-                } catch (err) {
-                    if (isActive) {
-                        console.error('Processing failed:', err)
-                        setError('Failed to fetch download link.')
-                        setIsProcessing(false)
-                        eventSource?.close()
-                    }
+                if (res.status === 200) {
+                    const data = await res.json()
+                    await applyCompletedDownload(data.url, getIsActive)
+                    return
                 }
-            }
 
-            eventSource.onerror = (err) => {
-                console.error('SSE Error:', err)
-                if (isActive) {
-                    setError('Connection lost.')
+                if (res.status === 202 && getIsActive()) {
+                    timerId = setTimeout(check, 5000)
+                }
+            } catch (err) {
+                if (getIsActive()) {
+                    console.error('Polling failed:', err)
+                    setError('Failed to fetch download link.')
                     setIsProcessing(false)
                 }
-                eventSource?.close()
             }
-
-            return
-            // }
         }
 
-        pollServer()
+        check()
+
+        return () => {
+            setProgressType('determinate')
+            setProgress(100)
+            if (timerId) clearTimeout(timerId)
+        }
+    }
+
+    const startServerSentEvents = (
+        uuid: string,
+        getIsActive: () => boolean
+    ): (() => void) => {
+        const sseUrl = `${import.meta.env.VITE_API_URL}/convert/stream?uuid=${uuid}`
+        const eventSource = new EventSource(sseUrl)
+
+        eventSource.onmessage = async (event) => {
+            if (!getIsActive()) return
+
+            try {
+                const data = JSON.parse(event.data)
+
+                if (data.progress !== undefined) {
+                    setProgress(50 + Math.round(data.progress * 50))
+
+                    if (data.progress >= 1) {
+                        eventSource.close()
+
+                        const res = await fetchDownload(uuid)
+                        const downloadData = await res.json()
+                        await applyCompletedDownload(
+                            downloadData.url,
+                            getIsActive
+                        )
+                    }
+                }
+            } catch (err) {
+                if (getIsActive()) {
+                    console.error('SSE Processing failed:', err)
+                    setError('Failed to fetch download link.')
+                    setIsProcessing(false)
+                    eventSource.close()
+                }
+            }
+        }
+
+        eventSource.onerror = (err) => {
+            console.error('SSE Error:', err)
+            if (getIsActive()) {
+                setError('Connection lost.')
+                setIsProcessing(false)
+            }
+            eventSource.close()
+        }
+
+        return () => eventSource.close()
+    }
+
+    const pollServer = (
+        fileKey: string,
+        getIsActive: () => boolean
+    ): (() => void) | undefined => {
+        const uuid = fileKey.split('/').at(0)
+        if (!uuid) return
+
+        if (import.meta.env.VITE_IS_AWS === 'false') {
+            return startServerSentEvents(uuid, getIsActive)
+        }
+
+        return pollDownloadEvery5Seconds(uuid, getIsActive)
+    }
+
+    useEffect(() => {
+        let isActive = true
+        let cleanup: (() => void) | undefined
+
+        if (isProcessing && fileKey) {
+            cleanup = pollServer(fileKey, () => isActive)
+        }
 
         return () => {
             isActive = false
-            if (eventSource) eventSource.close() // 4. Guaranteed cleanup on unmount
+            if (cleanup) cleanup()
         }
     }, [isProcessing, fileKey])
 
@@ -289,7 +352,7 @@ function App() {
                                 </ListItem>{' '}
                                 <LinearProgress
                                     className="flex-1 w-full"
-                                    variant="determinate"
+                                    variant={progressType}
                                     value={progress}
                                     aria-label="Upload video"
                                 />

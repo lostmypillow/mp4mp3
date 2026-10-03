@@ -15,7 +15,7 @@ services:
           memory: 512M
     depends_on:
         minio:
-          condition: service_started
+          condition: service_healthy
   
   minio:
     image: minio/minio:latest
@@ -26,6 +26,12 @@ services:
     env_file:
       - .env
     command: server /data --console-address ":9001"
+    healthcheck:
+      test: [ "CMD", "mc", "ready", "local" ]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     deploy:
       resources:
         limits:

@@ -25,7 +25,10 @@ export class Mp4mp3Stack extends cdk.Stack {
             cors: [
                 {
                     allowedMethods: [s3.HttpMethods.PUT],
-                    allowedOrigins: ['mp4mp3-public.lostmypillow.com'],
+                    allowedOrigins: [
+                        'mp4mp3-public.lostmypillow.com',
+                        'https://*.mp4mp3.pages.dev',
+                    ],
                     allowedHeaders: ['*'],
                 },
             ],
