@@ -51,7 +51,7 @@ router.post(
 
             if (!detail || !detail.bucket || !detail.object) {
                 console.error('Invalid EventBridge payload')
-                return
+                return res.status(400).send('Invalid EventBridge payload')
             }
 
             bucketName = detail.bucket.name
@@ -59,16 +59,17 @@ router.post(
             const objectSize = detail.object.size
 
             if (!bucketName || !objectKey) {
-                console.log(
-                    'Ignored: Missing bucket or object key in EventBridge payload.'
-                )
-                return
+                return res
+                    .status(200)
+                    .send('Ignored: Missing bucket or object key')
             }
             if (!objectKey.toLowerCase().endsWith('.mp4')) {
-                console.log(`Ignored: Object ${objectKey} is not an MP4 file.`)
-                return
+                return res.status(200).send('Ignored: Not an MP4 file')
             }
-            if (objectSize > MAX_FILE_SIZE_BYTES) {
+            if (
+                objectSize > MAX_FILE_SIZE_BYTES &&
+                process.env.VITE_IS_AWS === 'true'
+            ) {
                 console.warn(
                     `File ${objectKey} rejected. Size (${objectSize} bytes) exceeds limit.`
                 )

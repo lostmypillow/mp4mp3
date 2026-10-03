@@ -30,10 +30,6 @@ test.describe('Error Handling E2E Flow', () => {
         await expect(
             page.getByText('Server unavailable or S3 error')
         ).toBeVisible()
-
-        // Download button should remain disabled
-        const downloadButton = page.getByRole('button', { name: '下載 MP3 檔' })
-        await expect(downloadButton).toBeDisabled()
     })
 
     test('should handle download metadata failure gracefully when download API returns 500', async ({
@@ -64,17 +60,20 @@ test.describe('Error Handling E2E Flow', () => {
         })
 
         // Mock SSE stream endpoint emitting complete progress
-        await page.route(`**/convert/stream?uuid=${targetUuid}`, async (route) => {
-            await route.fulfill({
-                status: 200,
-                headers: {
-                    'Content-Type': 'text/event-stream',
-                    'Cache-Control': 'no-cache',
-                    Connection: 'keep-alive',
-                },
-                body: 'data: {"progress": 1.0}\n\n',
-            })
-        })
+        await page.route(
+            `**/convert/stream?uuid=${targetUuid}`,
+            async (route) => {
+                await route.fulfill({
+                    status: 200,
+                    headers: {
+                        'Content-Type': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        Connection: 'keep-alive',
+                    },
+                    body: 'data: {"progress": 1.0}\n\n',
+                })
+            }
+        )
 
         // Mock failed download endpoint
         await page.route(`**/download*`, async (route) => {

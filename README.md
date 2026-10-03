@@ -1,28 +1,42 @@
 # MP4MP3: Convert MP4 to MP3
 
+
 ## About The Project
 
 <!--Screenshot here-->
 
 A full stack TypeScript project that provides an easy way to convert MP4 files into MP3.
 
-Born out of a desire to give my father a better conversion experience than "I'm sorry you have reached the free limit for conversions for today" asshole websites, and to mitigate slow uploads to said websites.
+Born out of a desire to give my dad a better conversion experience than "I'm sorry you have reached the free limit for conversions for today" asshole websites, and to mitigate slow uploads to said websites.
 
-### Built With
+### Public demo
+Link: https://mp4mp3-public.lostmypillow.com
+
+> Note that there is a 10MB file limit, and due to AWS Free Tier constraints you can only see generic progress bar after uploading.
+
+And before you ask, I obviously don't let my dad use the demo version.
+
+### Full version
+The same version my dad uses. Unlimited file size and a real-time conversion progress bar.
+
+Wanna see it in action? Hire me, or reach out for an interview at [jmlin0101@gmail.com,](mailto:jmlin0101@gmail.com) and I'll run a live demo for you.
+
+## Built With
 
 - Express (for backend)
 - React (for frontend)
-- MinIO (for object storage)
+- MinIO/S3 (for object storage)
 - FFmpeg (for the conversion library)
-- Docker (for deployment platform)
+- Docker (for self-hosted deployment platform)
+- AWS (for cloud demo)
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node: https://nodejs.org/en/download
-- FFmpeg
-- act: from `brew install act`
+- pnpm: https://pnpm.io/
+- FFmpeg https://ffmpeg.org/download.html
 - Docker
     - Linux: https://docs.docker.com/engine/install/
     - Other OSes: https://docs.docker.com/desktop/
@@ -30,7 +44,7 @@ Born out of a desire to give my father a better conversion experience than "I'm 
 ### Installation
 
 ```sh
-    npm install
+pnpm install
 ```
 
 ## Usage
@@ -65,14 +79,14 @@ INTERNAL_S3_ENDPOINT=http://minio:9000
 For most development purposes, it is highly advisable to just run (from root folder):
 
 ```
-npm run dev --workspace=frontend
+pnpm -F frontend run dev
 ```
 
 Alternatively, the manual (and more involved) process would be to build and deploy to a bucket in MinIO, and spin up a nginx Docker pointing towards that bucket. The commands are as follows:
 
 ```
-npm run build --workspace=frontend
-npm run deploy --workspace=frontend
+pnpm -F frontend run build
+pnpm -F frontend run deploy
 docker compose up -d web
 
 # To shutdown
@@ -90,16 +104,16 @@ docker compose up -d mp4mp3
 Alternatively, if you've changed the enviroment variables for MinIO server IP in `.env`, you can run the following (from root folder):
 
 ```
-npm run dev --workspace=backend
+pnpm -F backend run dev
 ```
 
 
 ## License
 
-Distributed under GNU AGPLv3. See `LICENSE.txt` for more information.
+Distributed under GNU AGPLv3. See `LICENSE` for more information.
 
 ## Contact
 
-Johnny - jmlin0101@gmail.com
+Johnny - [jmlin0101@gmail.com](mailto:jmlin0101@gmail.com)
 
 ## Acknowledgments

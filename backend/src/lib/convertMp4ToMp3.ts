@@ -1,7 +1,7 @@
 import { spawn, execFile, ChildProcessByStdio } from 'node:child_process'
 import readline from 'node:readline'
 import { promisify } from 'node:util'
-import { ffmpegPath } from './ffmpegPath.js'
+import { ffmpegPath, ffprobePath } from './ffmpegPath.js'
 import type { Interface } from 'node:readline'
 import { once } from 'node:events'
 import { sseEmitter } from './sse.js'
@@ -13,7 +13,7 @@ export async function convertMp4ToMp3(
     uuid: string
 ): Promise<void> {
     const { stdout: probedDuration }: { stdout: string } = await execFileAsync(
-        'ffprobe',
+        ffprobePath,
         [
             '-v',
             'error',

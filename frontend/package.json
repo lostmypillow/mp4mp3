@@ -12,6 +12,7 @@
         "build": "vite build",
         "build:dev": "vite build --mode dev",
         "build:prod": "vite build --mode prod",
+        "build:aws": "vite build --mode aws",
         "preview": "vite preview",
         "deploy": "vite build && node --env-file=../.env deploy.ts",
         "deploy:dev": "vite build --mode dev && node --env-file=../.env.dev deploy.ts",
