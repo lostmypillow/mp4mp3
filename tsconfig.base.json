@@ -4,6 +4,10 @@
         "allowJs": true,
         "skipLibCheck": true,
         "strict": true,
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "composite": true,
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "outDir": "./dist"
     }
 }
