@@ -18,6 +18,20 @@ router.post('/', async (req: Request, res: Response) => {
             body.filename || `${randomUUID()}.mp4`
         ).replace(/["\r\n]/g, '')
 
+        const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
+        const contentLength = Number(body.contentLength)
+
+        if (
+            (!contentLength ||
+                contentLength <= 0 ||
+                contentLength > MAX_SIZE_BYTES) &&
+            process.env.VITE_IS_AWS === 'true'
+        ) {
+            return res
+                .status(400)
+                .json({ error: 'File size must be between 1 byte and 10MB.' })
+        }
+
         const command = new PutObjectCommand({
             Bucket: process.env.UPLOAD_BUCKET_NAME,
             Key: `${jobId}/${originalFilename}`,

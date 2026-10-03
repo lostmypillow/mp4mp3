@@ -26,7 +26,7 @@ export class Mp4mp3Stack extends cdk.Stack {
                 {
                     allowedMethods: [s3.HttpMethods.PUT],
                     allowedOrigins: [
-                        'mp4mp3-public.lostmypillow.com',
+                        'https://mp4mp3-public.lostmypillow.com',
                         'https://*.mp4mp3.pages.dev',
                     ],
                     allowedHeaders: ['*'],
@@ -89,12 +89,15 @@ export class Mp4mp3Stack extends cdk.Stack {
             environment: {
                 PATH: '/opt/bin:/usr/local/bin:/usr/bin/:/bin',
                 UPLOAD_BUCKET_NAME: bucket.bucketName,
+                VITE_IS_AWS: 'true',
             },
         })
 
         mainHandler.addFunctionUrl({
             authType: lambda.FunctionUrlAuthType.NONE,
         })
+
+        convertRule.addTarget(new targets.LambdaFunction(mainHandler))
 
         const killSwitchLambda = new lambdaNode.NodejsFunction(
             this,

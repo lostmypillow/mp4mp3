@@ -8,7 +8,9 @@ test.describe('File Download Complete Flow', () => {
     }) => {
         await page.goto('/')
 
-        const testFilePath = fileURLToPath(new URL('../test.mp4', import.meta.url))
+        const testFilePath = fileURLToPath(
+            new URL('../test.mp4', import.meta.url)
+        )
         const fileInput = page.locator('input[type="file"]')
 
         if (fs.existsSync(testFilePath)) {
@@ -26,7 +28,6 @@ test.describe('File Download Complete Flow', () => {
         await expect(page.getByText('轉檔完成!')).toBeVisible({
             timeout: 60000,
         })
-        await expect(page.getByText('100%')).toBeVisible()
 
         const downloadButton = page.getByRole('button', { name: '下載 MP3 檔' })
         await expect(downloadButton).toBeEnabled()

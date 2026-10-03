@@ -5,13 +5,14 @@ import LinearProgress from '@mui/material/LinearProgress'
 import FooterCredits from './FooterCredits.tsx'
 import HeaderBar from './HeaderBar.tsx'
 import {
+    CircularProgress,
     Divider,
     List,
     ListItem,
     ListItemIcon,
     ListItemText,
 } from '@mui/material'
-import FolderIcon from '@mui/icons-material/Folder'
+import VideoFileIcon from '@mui/icons-material/VideoFile'
 import FileDownloadIcon from '@mui/icons-material/FileDownload'
 import { VisuallyHiddenInput } from './VisuallyHiddenInput.tsx'
 
@@ -258,6 +259,20 @@ function App() {
     const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
         if (event.target.files) {
             const file = event.target.files[0]
+            const MAX_SIZE_BYTES = 10 * 1024 * 1024 // 10MB
+
+            if (
+                import.meta.env.VITE_IS_AWS === 'true' &&
+                file.size > MAX_SIZE_BYTES
+            ) {
+                alert(
+                    'File size exceeds the 10MB limit.\n\n' +
+                        'Hire me to unlock unlimited file size.\n' +
+                        'Visit lostmypillow.com for my resume and contact details.'
+                )
+                event.target.value = '' // Reset input so user can re-select if needed
+                return
+            }
             setDownloadList([file])
             if (file) {
                 uploadFile(file).then(() => console.log('File uploaded'))
@@ -281,7 +296,7 @@ function App() {
             <div className="flex flex-col items-start w-screen h-screen">
                 <HeaderBar />
 
-                <div className="p-8 w-full h-full flex flex-col items-center justify-between">
+                <div className="p-4 w-full h-full flex flex-col items-center justify-between">
                     <div className="flex flex-col md:flex-row gap-2 items-center justify-center w-full">
                         <Button
                             component="label"
@@ -304,29 +319,59 @@ function App() {
                     <List className="w-full">
                         {downloadList.map((file: File) => (
                             <>
-                                <ListItem>
+                                <ListItem
+                                    secondaryAction={
+                                        progress === 100 ? (
+                                            <Button
+                                                startIcon={<FileDownloadIcon />}
+                                                onClick={handleDownload}
+                                                disabled={
+                                                    uploading ||
+                                                    isProcessing ||
+                                                    !downloadUrl
+                                                }
+                                            >
+                                                <span className="hidden md:block">
+                                                    下載 MP3 檔
+                                                </span>
+                                            </Button>
+                                        ) : (
+                                            <div className="block md:hidden">
+                                                <CircularProgress
+                                                    variant={progressType}
+                                                    value={progress}
+                                                    aria-label="Upload video"
+                                                />
+                                            </div>
+                                        )
+                                    }
+                                >
                                     <ListItemIcon>
-                                        <FolderIcon />
+                                        <VideoFileIcon />
                                     </ListItemIcon>
                                     <ListItemText
                                         className="flex-1"
                                         primary={
                                             <>
-                                                <span className="truncate md:whitespace-normal md:overflow-visible md:text-clip">
+                                                <span
+                                                    className="inline-block truncate max-w-[140px] sm:max-w-xs md:max-w-none md:whitespace-normal align-bottom"
+                                                    title={file.name}
+                                                >
                                                     {file.name}
                                                 </span>
+                                            </>
+                                        }
+                                        secondary={
+                                            <>
                                                 <span className="font-bold">
-                                                    : 處理進度:{' '}
-                                                    <span className="font-mono tabular-nums">
-                                                        {progress}%{' '}
-                                                    </span>
                                                     <span className="font-bold">
-                                                        | 處理狀態:{' '}
+                                                        處理狀態:{' '}
                                                         {uploading
                                                             ? '上傳中...'
                                                             : isProcessing
                                                               ? '轉檔中...'
-                                                              : downloadUrl
+                                                              : downloadUrl !==
+                                                                  ''
                                                                 ? '轉檔完成!'
                                                                 : error
                                                                   ? error
@@ -336,26 +381,15 @@ function App() {
                                             </>
                                         }
                                     />
-                                    <Button
-                                        startIcon={<FileDownloadIcon />}
-                                        variant={'contained'}
-                                        color="primary"
-                                        onClick={handleDownload}
-                                        disabled={
-                                            uploading ||
-                                            isProcessing ||
-                                            !downloadUrl
-                                        }
-                                    >
-                                        下載 MP3 檔
-                                    </Button>
                                 </ListItem>{' '}
-                                <LinearProgress
-                                    className="flex-1 w-full"
-                                    variant={progressType}
-                                    value={progress}
-                                    aria-label="Upload video"
-                                />
+                                <div className="hidden md:block w-full flex-1">
+                                    <LinearProgress
+                                        className="w-full"
+                                        variant={progressType}
+                                        value={progress}
+                                        aria-label="Upload video"
+                                    />
+                                </div>
                                 <Divider />
                             </>
                         ))}
