@@ -101,4 +101,4 @@ jobs:
         env:
           CI: true
           E2E_URL: "https://mp4mp3-dev.lostmypillow.com"
-        run: pnpm run e2e
+        run: pnpm run e2e:ci
