@@ -1,24 +1,10 @@
 {
+    "extends": "./tsconfig.base.json",
     "compilerOptions": {
-        "target": "ES2022",
         "module": "ESNext",
         "moduleResolution": "bundler",
-        "types": [
-            "node"
-        ],
-        "allowJs": true,
-        "skipLibCheck": true,
-        "noEmit": true
+        "types": ["node"]
     },
-    "include": [
-        "eslint.config.ts",
-        "prettier.config.mjs",
-        "aws/**/*",
-        "backend/**/*"
-    ],
-    "exclude": [
-        "**/node_modules",
-        "**/dist",
-        "**/cdk.out"
-    ]
+    "files": [],
+    "include": ["eslint.config.ts"]
 }
