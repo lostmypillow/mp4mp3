@@ -12,6 +12,13 @@ export default defineConfig({
     use: {
         baseURL: process.env.E2E_URL || 'http://localhost:5173',
         trace: 'on-first-retry',
+        launchOptions: process.env.CI
+            ? {
+                  args: [
+                      '--host-resolver-rules=MAP *.lostmypillow.com 127.0.0.1',
+                  ],
+              }
+            : {},
     },
     projects: [
         {
