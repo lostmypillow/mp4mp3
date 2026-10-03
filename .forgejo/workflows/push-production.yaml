@@ -5,9 +5,41 @@ on:
     branches: [ main ]
 
 jobs:
+  deploy-frontend:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify WARP Outbound Routing
+        run: |
+          echo "=== Proxy Environment Variables ==="
+          env | grep -iE 'proxy' || echo "No proxy env set"
+
+          echo "=== Cloudflare Trace ==="
+          curl -fsSL https://cloudflare.com/cdn-cgi/trace | grep -E 'ip|colo|warp'
+
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Deploy website
+        run: pnpm -F frontend run deploy:prod
 
   deploy-api:
     name: Deploy prod API to Docker
+    needs: ['deploy-frontend']
     runs-on: host
     steps:
       - name: Checkout Code
